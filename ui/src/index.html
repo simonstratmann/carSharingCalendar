@@ -1,0 +1,22 @@
+<!--File in src is copied to static but the one in src/main/resources/templates is loaded!-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CSC </title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://unpkg.com/angular-calendar@0.29.0/css/angular-calendar.css" rel="stylesheet">
+  <link href="https://unpkg.com/flatpickr@4.6.9/dist/flatpickr.css" rel="stylesheet">
+  <script>
+    if (window.location.href.indexOf("127.0.0.1") > -1) {
+      console.log("Enabling live reload for local development")
+      document.write('<script src="http://127.0.0.1:1234/livereload.js?snipver=1"></' + 'script>')
+    }
+  </script>
+</head>
+<body>
+<app-root></app-root>
+</body>
+</html>

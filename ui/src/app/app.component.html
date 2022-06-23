@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light ">
+  <div class="container-md">
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <i class="navbar-brand"><i class="bi bi-droplet-fill"></i> TATTOO</i>
+    </ul>
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <a class="nav-link" href="#" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Suche</a>
+      <a class="nav-link" href="#" routerLink="/registrations" routerLinkActive="active">Registrierungen</a>
+      <a class="nav-link" href="#" routerLink="/integrations" routerLinkActive="active">Integrationen</a>
+
+    </ul>
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <span class="navbar-text username">
+      <i class="bi bi-person-fill"></i> {{username}}
+    </span>
+      <li class="nav-item">
+        <a class="nav-link" href="https://gitlab.ppi.int/tph/dev-tools/tattoo/-/raw/master/tamperMonkeyScript.user.js" target="_blank"><img src="tampermonkey.png" style="margin-right: 5px; width: 30px"/>Tampermonkey-Script</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!---->
+<div class="container">
+  <router-outlet></router-outlet>
+</div>
+
+
+
