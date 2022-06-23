@@ -1,0 +1,8 @@
+- Styling von Wochen- und Tagesanzeige
+- Bearbeiten von Einträgen
+- Löschen inklusive Abfrage
+- Abfrage und Speichern des Benutzernamens
+- Periodische Sicherung der Werte als JSON
+- Fahrtenbuch
+- Erstellung eines Termins über Klicken auf einen Tag
+- Überprüfung von Überschneidungen und ggf. automatische Anpassung der Werte
