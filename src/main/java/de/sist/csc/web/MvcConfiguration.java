@@ -10,9 +10,7 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 
 import java.io.IOException;
 
-/**
- * @author PPI AG
- */
+
 @Configuration
 public class MvcConfiguration implements WebMvcConfigurer {
     @Override

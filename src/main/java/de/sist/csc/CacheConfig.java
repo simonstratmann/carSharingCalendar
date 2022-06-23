@@ -10,9 +10,7 @@ import org.springframework.context.annotation.Profile;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author PPI AG
- */
+
 @SuppressWarnings({"rawtypes", "unchecked"})
 @Configuration
 @Profile("!dev")

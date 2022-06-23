@@ -1,8 +1,12 @@
 import {ChangeDetectionStrategy, Component, TemplateRef, ViewChild,} from '@angular/core';
-import {endOfDay, isSameDay, isSameMonth, startOfDay,} from 'date-fns';
-import {Subject} from 'rxjs';
+import {isSameDay, isSameMonth,} from 'date-fns';
+import {HttpClient} from '@angular/common/http';
+import {Observable, Subject} from 'rxjs';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {CalendarEvent, CalendarEventAction, CalendarEventTimesChangedEvent, CalendarView,} from 'angular-calendar';
+import {CalendarEvent, CalendarEventAction, CalendarView,} from 'angular-calendar';
+import {CarSharingEvent} from "@shared/carSharingCalendar";
+import {map} from "rxjs/operators";
+import {NGXLogger} from "ngx-logger";
 
 const colors: any = {
   red: {
@@ -44,6 +48,8 @@ export class CscComponent {
 
   CalendarView = CalendarView;
 
+  events$: Observable<CalendarEvent<{ film: CarSharingEvent }>[]>;
+
   viewDate: Date = new Date();
 
   modalData: {
@@ -56,65 +62,29 @@ export class CscComponent {
       label: '<i class="fas fa-fw fa-pencil-alt"></i>',
       a11yLabel: 'Edit',
       onClick: ({event}: { event: CalendarEvent }): void => {
-        this.handleEvent('Edited ', event);
+        // this.handleEvent('Edited ', event);
       },
     },
     {
       label: '<i class="fas fa-fw fa-trash-alt"></i>',
       a11yLabel: 'Delete',
       onClick: ({event}: { event: CalendarEvent }): void => {
-        this.events = this.events.filter((iEvent) => iEvent !== event);
-        this.handleEvent('Deleted', event);
+        // this.events = this.events.filter((iEvent) => iEvent !== event);
+        // this.handleEvent('Deleted', event);
       },
     },
   ];
 
   refresh = new Subject<void>();
 
-  events: CalendarEvent[] = [
-    {
-      start: new Date(2022, 5, 23, 10),
-      end: new Date(2022, 5, 24, 11),
-      title: 'A 2 day event',
-      color: colors.red,
-      actions: this.actions,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true,
-      },
-      draggable: true,
-    }
-    // ,
-    // {
-    //   start: startOfDay(new Date()),
-    //   title: 'An event with no end date',
-    //   color: colors.yellow,
-    //   actions: this.actions,
-    // },
-    // {
-    //   start: subDays(endOfMonth(new Date()), 3),
-    //   end: addDays(endOfMonth(new Date()), 3),
-    //   title: 'A long event that spans 2 months',
-    //   color: colors.blue,
-    //   allDay: true,
-    // },
-    // {
-    //   start: addHours(startOfDay(new Date()), 2),
-    //   end: addHours(new Date(), 2),
-    //   title: 'A draggable and resizable event',
-    //   color: colors.yellow,
-    //   actions: this.actions,
-    //   resizable: {
-    //     beforeStart: true,
-    //     afterEnd: true,
-    //   },
-    //   draggable: true,
-    // },
-  ];
 
   activeDayIsOpen: boolean = true;
 
-  constructor(private modal: NgbModal) {
+  constructor(private modal: NgbModal, private http: HttpClient, private logger: NGXLogger) {
+  }
+
+  ngOnInit(): void {
+    this.fetchEvents();
   }
 
   dayClicked({date, events}: { date: Date; events: CalendarEvent[] }): void {
@@ -125,49 +95,88 @@ export class CscComponent {
     }
   }
 
-  eventTimesChanged({
-                      event,
-                      newStart,
-                      newEnd,
-                    }: CalendarEventTimesChangedEvent): void {
-    this.events = this.events.map((iEvent) => {
-      if (iEvent === event) {
-        return {
-          ...event,
-          start: newStart,
-          end: newEnd,
-        };
-      }
-      return iEvent;
-    });
-    this.handleEvent('Dropped or resized ', event);
+  fetchEvents(): void {
+
+
+    // this.events$ = this.http
+    //   .get('http://127.0.0.1:9000/api/events')
+    //   .pipe(
+    //     map(({ results }: { results: CarSharingEvent[] }) => {
+    //       return results.map((event: CarSharingEvent) => {
+    //         return {
+    //           title: event.title,
+    //           start: event.start,
+    //
+    //           end: event.end,
+    //           color: null,
+    //           allDay: false
+    //         };
+    //       });
+    //     })
+    //   );
+    this.events$ = this.http
+      .get('http://127.0.0.1:9000/api/events')
+
+      .pipe(
+        map((results: CarSharingEvent[]) => {
+          return results.map((event: CarSharingEvent) => {
+            this.logger.info(event);
+            return {
+              title: event.title,
+              start: event.start,
+
+              end: event.end,
+              color: colors.blue,
+              allDay: false
+            };
+          });
+        })
+      );
   }
 
-  handleEvent(action: string, event: CalendarEvent): void {
-    this.modalData = {event, action};
-    this.modal.open(this.modalContent, {size: 'lg'});
-  }
-
-  addEvent(): void {
-    this.events = [
-      ...this.events,
-      {
-        title: 'New event',
-        start: startOfDay(new Date()),
-        end: endOfDay(new Date()),
-        color: colors.red,
-        draggable: true,
-        resizable: {
-          beforeStart: true,
-          afterEnd: true,
-        },
-      },
-    ];
-  }
-
-  deleteEvent(eventToDelete: CalendarEvent) {
-    this.events = this.events.filter((event) => event !== eventToDelete);
-  }
+  // eventTimesChanged({
+  //                     event,
+  //                     newStart,
+  //                     newEnd,
+  //                   }: CalendarEventTimesChangedEvent): void {
+  //   this.events = this.events.map((iEvent) => {
+  //     if (iEvent === event) {
+  //       return {
+  //         ...event,
+  //         start: newStart,
+  //         end: newEnd,
+  //       };
+  //     }
+  //     return iEvent;
+  //   });
+  //   this.handleEvent('Dropped or resized ', event);
+  // }
+  //
+  // handleEvent(action: string, event: CalendarEvent): void {
+  //   this.modalData = {event, action};
+  //   this.modal.open(this.modalContent, {size: 'lg'});
+  // }
+  //
+  // addEvent(): void {
+  //   this.events = [
+  //     ...this.events,
+  //     {
+  //       title: 'New event',
+  //       start: startOfDay(new Date()),
+  //       end: endOfDay(new Date()),
+  //       color: colors.red,
+  //       draggable: true,
+  //       resizable: {
+  //         beforeStart: true,
+  //         afterEnd: true,
+  //       },
+  //     },
+  //   ];
+  // }
+  //
+  // deleteEvent(eventToDelete: CalendarEvent) {
+  //   this.events = this.events.filter((event) => event !== eventToDelete);
+  // }
 
   setView(view: CalendarView) {
     this.view = view;

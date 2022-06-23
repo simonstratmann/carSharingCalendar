@@ -117,13 +117,7 @@
                 <configuration>
                     <jsonLibrary>jackson2</jsonLibrary>
                     <classPatterns>
-                        <pattern>de.sist.tph.tattoo.api.notifications.config.RegistrationEntry</pattern>
-                        <pattern>de.sist.tph.tattoo.api.notifications.config.RegistrationMatch</pattern>
-                        <pattern>de.sist.tph.tattoo.api.notifications.NotificationTechnology</pattern>
-                        <pattern>de.sist.tph.tattoo.api.info.*</pattern>
-                        <pattern>de.sist.tph.tattoo.api.TphProject</pattern>
-                        <pattern>de.sist.tph.tattoo.api.Config</pattern>
-                        <pattern>de.sist.tph.tattoo.api.integrations.*</pattern>
+                        <pattern>de.sist.csc.model.Event</pattern>
                     </classPatterns>
                     <outputKind>module</outputKind>
                     <optionalProperties>all</optionalProperties>

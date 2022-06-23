@@ -1,4 +1,4 @@
-import {HttpClientModule} from "@angular/common/http";
+import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import {NgModule} from "@angular/core";
 import {BrowserModule} from "@angular/platform-browser";
 import {RouterModule} from "@angular/router";
@@ -10,6 +10,7 @@ import {LoggerModule, NgxLoggerLevel} from "ngx-logger";
 import {AppComponent} from "./app.component";
 import {CookieService} from "ngx-cookie-service";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
+import {AngularDateHttpInterceptor} from "@shared/DateHttpInterceptor";
 
 
 @NgModule({
@@ -29,7 +30,12 @@ import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
       serverLogLevel: NgxLoggerLevel.ERROR
     }),
   ],
-  providers: [CookieService],
+  providers: [CookieService,
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AngularDateHttpInterceptor,
+      multi: true
+    }],
   bootstrap: [AppComponent]
 })
 export class AppModule {
