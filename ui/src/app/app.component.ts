@@ -1,4 +1,6 @@
 import {Component} from "@angular/core";
+import flatpickr from "flatpickr";
+import {German} from "flatpickr/dist/l10n/de";
 
 @Component({
   selector: "app-root",
@@ -11,6 +13,8 @@ export class AppComponent {
   username: string;
 
   constructor() {
+    flatpickr.localize(German);
+
   }
 
 

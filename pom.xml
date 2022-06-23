@@ -117,7 +117,7 @@
                 <configuration>
                     <jsonLibrary>jackson2</jsonLibrary>
                     <classPatterns>
-                        <pattern>de.sist.csc.model.Event</pattern>
+                        <pattern>de.sist.csc.model.Registration</pattern>
                     </classPatterns>
                     <outputKind>module</outputKind>
                     <optionalProperties>all</optionalProperties>

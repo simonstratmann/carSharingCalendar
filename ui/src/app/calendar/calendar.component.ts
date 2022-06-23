@@ -5,8 +5,11 @@ import {Observable, Subject} from 'rxjs';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {CalendarEvent, CalendarEventAction, CalendarView,} from 'angular-calendar';
 import {CarSharingEvent} from "@shared/carSharingCalendar";
-import {map} from "rxjs/operators";
+import {map, tap} from "rxjs/operators";
 import {NGXLogger} from "ngx-logger";
+import {registerLocaleData} from "@angular/common";
+import localeDe from "@angular/common/locales/de";
+import localeDeExtra from "@angular/common/locales/extra/de";
 
 const colors: any = {
   red: {
@@ -22,6 +25,7 @@ const colors: any = {
     secondary: '#FDF1BA',
   },
 };
+
 
 @Component({
   selector: 'mwl-demo-component',
@@ -42,38 +46,41 @@ const colors: any = {
 })
 
 export class CscComponent {
-  @ViewChild('modalContent', {static: true}) modalContent: TemplateRef<any>;
+  @ViewChild('eventModalContent', {static: false}) eventModalContent: TemplateRef<any>;
+  @ViewChild('newRegistrationModalContent', {static: false}) newRegistrationModalContent: TemplateRef<any>;
 
   view: CalendarView = CalendarView.Month;
 
   CalendarView = CalendarView;
 
-  events$: Observable<CalendarEvent<{ film: CarSharingEvent }>[]>;
+  events$: Observable<CalendarEvent<{ event: CarSharingEvent }>[]>;
 
   viewDate: Date = new Date();
 
-  modalData: {
+  eventInfoModalData: {
     action: string;
     event: CalendarEvent;
   };
+
+  newRegistrationModalData: CarSharingEvent;
 
   actions: CalendarEventAction[] = [
     {
       label: '<i class="fas fa-fw fa-pencil-alt"></i>',
       a11yLabel: 'Edit',
       onClick: ({event}: { event: CalendarEvent }): void => {
-        // this.handleEvent('Edited ', event);
+        this.logger.info("Clicked " + event);
+        console.log("Clicked " + event)
+        this.handleEvent('Edited ', event);
       },
-    },
-    {
-      label: '<i class="fas fa-fw fa-trash-alt"></i>',
-      a11yLabel: 'Delete',
-      onClick: ({event}: { event: CalendarEvent }): void => {
-        // this.events = this.events.filter((iEvent) => iEvent !== event);
-        // this.handleEvent('Deleted', event);
-      },
+
     },
   ];
+
+  handleEvent(action: string, event: CalendarEvent): void {
+    this.eventInfoModalData = {event, action};
+    this.modal.open(this.eventModalContent, {size: 'lg'});
+  }
 
   refresh = new Subject<void>();
 
@@ -81,6 +88,7 @@ export class CscComponent {
   activeDayIsOpen: boolean = true;
 
   constructor(private modal: NgbModal, private http: HttpClient, private logger: NGXLogger) {
+    registerLocaleData(localeDe, 'de-DE', localeDeExtra);
   }
 
   ngOnInit(): void {
@@ -97,26 +105,8 @@ export class CscComponent {
 
   fetchEvents(): void {
 
-
-    // this.events$ = this.http
-    //   .get('http://127.0.0.1:9000/api/events')
-    //   .pipe(
-    //     map(({ results }: { results: CarSharingEvent[] }) => {
-    //       return results.map((event: CarSharingEvent) => {
-    //         return {
-    //           title: event.title,
-    //           start: event.start,
-    //
-    //           end: event.end,
-    //           color: null,
-    //           allDay: false
-    //         };
-    //       });
-    //     })
-    //   );
     this.events$ = this.http
-      .get('http://127.0.0.1:9000/api/events')
-
+      .get('http://127.0.0.1:9000/api/registrations')
       .pipe(
         map((results: CarSharingEvent[]) => {
           return results.map((event: CarSharingEvent) => {
@@ -124,59 +114,23 @@ export class CscComponent {
             return {
               title: event.title,
               start: event.start,
-
+              actions: this.actions,
               end: event.end,
               color: colors.blue,
-              allDay: false
+              allDay: false,
+              meta: {
+                event: event
+              }
             };
           });
         })
-      );
+      )
+      .pipe(tap(results => {
+        results.sort((event1, event2) => event1.start - event2.start)
+      }));
+
   }
 
-  // eventTimesChanged({
-  //                     event,
-  //                     newStart,
-  //                     newEnd,
-  //                   }: CalendarEventTimesChangedEvent): void {
-  //   this.events = this.events.map((iEvent) => {
-  //     if (iEvent === event) {
-  //       return {
-  //         ...event,
-  //         start: newStart,
-  //         end: newEnd,
-  //       };
-  //     }
-  //     return iEvent;
-  //   });
-  //   this.handleEvent('Dropped or resized ', event);
-  // }
-  //
-  // handleEvent(action: string, event: CalendarEvent): void {
-  //   this.modalData = {event, action};
-  //   this.modal.open(this.modalContent, {size: 'lg'});
-  // }
-  //
-  // addEvent(): void {
-  //   this.events = [
-  //     ...this.events,
-  //     {
-  //       title: 'New event',
-  //       start: startOfDay(new Date()),
-  //       end: endOfDay(new Date()),
-  //       color: colors.red,
-  //       draggable: true,
-  //       resizable: {
-  //         beforeStart: true,
-  //         afterEnd: true,
-  //       },
-  //     },
-  //   ];
-  // }
-  //
-  // deleteEvent(eventToDelete: CalendarEvent) {
-  //   this.events = this.events.filter((event) => event !== eventToDelete);
-  // }
 
   setView(view: CalendarView) {
     this.view = view;
@@ -184,5 +138,19 @@ export class CscComponent {
 
   closeOpenMonthViewDay() {
     this.activeDayIsOpen = false;
+  }
+
+  addEvent() {
+    this.newRegistrationModalData = {};
+    this.newRegistrationModalData.start = new Date();
+    this.newRegistrationModalData.end = new Date();
+    this.modal.open(this.newRegistrationModalContent, {size: 'lg'}).result.then((result) => {
+      this.logger.info("Result ", result);
+      this.http.post('http://127.0.0.1:9000/api/registrations', result).subscribe(response => {
+        this.logger.info(response);
+        console.log(response);
+        this.fetchEvents();
+      })
+    });
   }
 }

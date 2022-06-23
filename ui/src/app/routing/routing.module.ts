@@ -2,18 +2,19 @@ import {NgModule} from "@angular/core";
 import {CommonModule} from "@angular/common";
 import {RouterModule, Routes} from "@angular/router";
 import {CscComponent} from "@calendar/calendar.component";
+import {LogbookComponent} from "@app/logbook/logbook.component";
 
 const routes: Routes = [
   {
     path: "",
     component: CscComponent
   }
-  // ,
-  // {
-  //     path: "search/:keyword",
-  //     component: SearchComponent
-  //
-  // },
+  ,
+  {
+    path: "logbook",
+    component: LogbookComponent
+
+  },
   // {
   //     path: "registrations",
   //     component: RegistrationsViewComponent
