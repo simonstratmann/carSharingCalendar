@@ -1,13 +1,12 @@
-import {ChangeDetectionStrategy, Component, TemplateRef, ViewChild,} from '@angular/core';
-import {isSameDay, isSameMonth,} from 'date-fns';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Pipe, PipeTransform, TemplateRef, ViewChild,} from '@angular/core';
+import {endOfDay, isSameDay, isSameMonth, startOfDay,} from 'date-fns';
 import {HttpClient} from '@angular/common/http';
-import {Observable, Subject} from 'rxjs';
+import {Subject} from 'rxjs';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {CalendarEvent, CalendarEventAction, CalendarView,} from 'angular-calendar';
+import {CalendarEvent, CalendarEventAction, CalendarMonthViewDay, CalendarView} from 'angular-calendar';
 import {CarSharingEvent} from "@shared/carSharingCalendar";
-import {map, tap} from "rxjs/operators";
 import {NGXLogger} from "ngx-logger";
-import {registerLocaleData} from "@angular/common";
+import {DatePipe, registerLocaleData} from "@angular/common";
 import localeDe from "@angular/common/locales/de";
 import localeDeExtra from "@angular/common/locales/extra/de";
 
@@ -24,7 +23,30 @@ const colors: any = {
     primary: '#e3bc08',
     secondary: '#FDF1BA',
   },
+  black: {
+    primary: '#cccccc',
+    secondary: '#ffffff',
+  },
 };
+
+interface Style {
+
+  backgroundColor: string;
+  description: string;
+}
+
+
+function userToColor(user: String) {
+  if (user === "Hilde") {
+    return colors.blue;
+  } else if (user === "Kuni") {
+    return colors.yellow
+  } else if (user === "Marianne") {
+    return colors.red;
+  } else {
+    return colors.black;
+  }
+}
 
 
 @Component({
@@ -53,7 +75,7 @@ export class CscComponent {
 
   CalendarView = CalendarView;
 
-  events$: Observable<CalendarEvent<{ event: CarSharingEvent }>[]>;
+  events: CalendarEvent<{ event: CarSharingEvent, style: Style }>[];
 
   viewDate: Date = new Date();
 
@@ -85,9 +107,9 @@ export class CscComponent {
   refresh = new Subject<void>();
 
 
-  activeDayIsOpen: boolean = true;
+  activeDayIsOpen: boolean = false;
 
-  constructor(private modal: NgbModal, private http: HttpClient, private logger: NGXLogger) {
+  constructor(private modal: NgbModal, private http: HttpClient, private logger: NGXLogger, private changeDetection: ChangeDetectorRef) {
     registerLocaleData(localeDe, 'de-DE', localeDeExtra);
   }
 
@@ -103,31 +125,34 @@ export class CscComponent {
     }
   }
 
-  fetchEvents(): void {
 
-    this.events$ = this.http
+  fetchEvents(): void {
+    this.logger.info("Loading registrations")
+    this.http
       .get('http://127.0.0.1:9000/api/registrations')
-      .pipe(
-        map((results: CarSharingEvent[]) => {
-          return results.map((event: CarSharingEvent) => {
-            this.logger.info(event);
-            return {
-              title: event.title,
-              start: event.start,
-              actions: this.actions,
-              end: event.end,
-              color: colors.blue,
-              allDay: false,
-              meta: {
-                event: event
-              }
-            };
+      .subscribe((events: CarSharingEvent[]) => {
+        this.logger.info("Received ", events.length, " registration entries")
+        this.events = [];
+        events.forEach(event => {
+          this.events.push({
+            title: event.title,
+            start: event.start,
+            actions: this.actions,
+            end: event.end,
+            color: userToColor(event.user),
+            meta: {
+              style: {
+                backgroundColor: "",
+                description: ""
+              },
+              event: event,
+
+            }
           });
         })
-      )
-      .pipe(tap(results => {
-        results.sort((event1, event2) => event1.start - event2.start)
-      }));
+        this.logger.info(this.events.length);
+        this.changeDetection.detectChanges();
+      });
 
   }
 
@@ -145,12 +170,64 @@ export class CscComponent {
     this.newRegistrationModalData.start = new Date();
     this.newRegistrationModalData.end = new Date();
     this.modal.open(this.newRegistrationModalContent, {size: 'lg'}).result.then((result) => {
-      this.logger.info("Result ", result);
+      if (!result) {
+        return;
+      }
+      this.logger.info("Adding new registration: ", result);
       this.http.post('http://127.0.0.1:9000/api/registrations', result).subscribe(response => {
         this.logger.info(response);
-        console.log(response);
+
         this.fetchEvents();
+      }, response => {
+        this.logger.error(response);
       })
     });
+  }
+}
+
+@Pipe({name: 'formatDayRegistration'})
+export class FormatDayRegistrationPipe implements PipeTransform {
+
+  constructor(private datepipe: DatePipe, private logger: NGXLogger) {
+  }
+
+  transform(event: CalendarEvent, day: CalendarMonthViewDay) {
+    let fullDesc = event.meta.event.user;
+    let timeDesc = "";
+    if (event.start < day.date && event.end > endOfDay(day.date)) {
+      timeDesc = "";
+    } else if (event.start < day.date && event.end < endOfDay(day.date)) {
+      timeDesc = "Bis " + this.datepipe.transform(event.end, "H:mm");
+    } else if (event.end > startOfDay(day.date) && event.end > endOfDay(day.date)) {
+      timeDesc = "Ab " + this.datepipe.transform(event.start, "H:mm");
+    } else {
+      timeDesc = this.datepipe.transform(event.start, "H:mm") + "-" + this.datepipe.transform(event.end, "H:mm");
+    }
+    if (timeDesc) {
+      fullDesc += ": " + timeDesc
+    }
+    if (event.title) {
+      fullDesc += " (" + event.title + ")";
+    }
+    return fullDesc;
+  }
+}
+
+@Pipe({name: 'dayColor'})
+export class DayColorPipe implements PipeTransform {
+
+  constructor() {
+  }
+
+  transform(day: CalendarMonthViewDay) {
+    let bgColor;
+    if (day.events.length !== 1) {
+      bgColor = '#ffffff';
+    } else if (day.events[0].start < day.date && day.events[0].end > endOfDay(day.date)) {
+      bgColor = userToColor(day.events[0].meta.event.user).primary;
+    } else {
+      bgColor = '#ffffff';
+    }
+    return bgColor;
   }
 }

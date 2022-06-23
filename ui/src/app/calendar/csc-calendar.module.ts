@@ -5,11 +5,11 @@ import {FlatpickrModule} from 'angularx-flatpickr';
 import {CalendarModule, DateAdapter} from 'angular-calendar';
 import {adapterFactory} from 'angular-calendar/date-adapters/date-fns';
 import {NgbModalModule} from '@ng-bootstrap/ng-bootstrap';
-import {CscComponent} from "@calendar/calendar.component";
+import {CscComponent, DayColorPipe, FormatDayRegistrationPipe} from "@calendar/calendar.component";
 
 
 @NgModule({
-  declarations: [CscComponent],
+  declarations: [CscComponent, FormatDayRegistrationPipe, DayColorPipe],
   exports: [CscComponent],
 
   imports: [

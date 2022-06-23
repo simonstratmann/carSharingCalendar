@@ -69,7 +69,7 @@
     Loading events...
   </div>
 </ng-template>
-<div *ngIf="events$ | async; else loading; let events">
+<div *ngIf="events.length > 0; else loading">
   <div [ngSwitch]="view">
     <mwl-calendar-month-view
       *ngSwitchCase="CalendarView.Month"
@@ -78,7 +78,9 @@
       [refresh]="refresh"
       locale="de-DE"
       [activeDayIsOpen]="activeDayIsOpen"
+      (dayClicked)="dayClicked($event.day)"
       (eventClicked)="handleEvent('Clicked', $event.event)"
+      [cellTemplate]="customCellTemplate"
     >
       <!--    (eventTimesChanged)="eventTimesChanged($event)"-->
       <!--  >-->
@@ -132,7 +134,7 @@
       </thead>
 
       <tbody>
-      <tr *ngFor="let event of events ">
+      <tr *ngFor="let event of events">
         <td>
           <input
             class="form-control"
@@ -280,10 +282,34 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-outline-primary" (click)="close()">Abbrechen</button>
-      <button type="button" class="btn btn-outline-secondary" (click)="close(newRegistrationModalData)">
+      <button type="button" class="btn btn-outline-secondary" (click)="close()">Abbrechen</button>
+      <button type="button" class="btn btn-outline-primary" (click)="close(newRegistrationModalData)">
         OK
       </button>
     </div>
   </ng-template>
+
+  <ng-template #customCellTemplate let-day="day" let-locale="locale">
+
+    <span [ngStyle]="{'background-color': day| dayColor}" style="height: 100%">
+      <div class="cal-cell-top">
+    <span class="cal-day-badge" *ngIf="day.badgeTotal > 0"
+    >{{ day.badgeTotal }}</span
+    >
+        <span class="cal-day-number"
+        >{{ day.date | calendarDate:'monthViewDayNumber':locale }}</span
+        >
+      </div>
+
+
+      <span *ngIf="day.badgeTotal === 0">
+      <small style="margin: 5px">     <i class="bi bi-bookmark-check"></i></small>
+    </span>
+      <span *ngFor="let event of day.events">
+      {{event | formatDayRegistration: day}}
+        <!--      <small style="margin: 5px"> {{ event.meta.event.user }} {{event.meta.event.start | date: "H:mm"}}-{{event.meta.event.end | date: "H:mm"}}</small>-->
+    </span>
+    </span>
+  </ng-template>
 </div>
+

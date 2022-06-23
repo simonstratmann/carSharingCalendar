@@ -22,12 +22,19 @@ public class CalendarWeb {
     private final List<Registration> registrations = new ArrayList<>();
 
     public CalendarWeb() {
-        final LocalDateTime start = LocalDateTime.of(2022, Month.JUNE, 23, 10, 0);
-        final LocalDateTime end = LocalDateTime.of(2022, Month.JUNE, 23, 15, 0);
-        registrations.addAll(Arrays.asList(new Registration(start, end, "Simon", "title", "text"),
-                new Registration(start.minusDays(2), end.plusDays(1), "Simon", "title2", "text"),
-                new Registration(start.minusDays(1), end.plusDays(2), "Simon", "title3", "text")
+        registrations.addAll(Arrays.asList(getRegistration(13, 10, 17, 15, "title", "Kuni"),
+                getRegistration(20, 10, 20, 22, "title", "Hilde"),
+                getRegistration(23, 10, 23, 15, null, "Marianne"),
+                getRegistration(23, 16, 23, 18, null, "Simon")
         ));
+    }
+
+    private static Registration getRegistration(int fromDay, int fromHour, int toDay, int toHour, String title, String user) {
+        return new Registration(getLocalDateTime(fromDay, fromHour), getLocalDateTime(toDay, toHour), user, title, "text");
+    }
+
+    private static LocalDateTime getLocalDateTime(int dayOfMonth, int hour) {
+        return LocalDateTime.of(2022, Month.JUNE, dayOfMonth, hour, 0);
     }
 
     @GetMapping(value = "/api/registrations", produces = MediaType.APPLICATION_JSON_VALUE)
