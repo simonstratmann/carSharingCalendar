@@ -154,7 +154,7 @@ export class CscComponent {
   fetchEvents(): void {
     this.logger.info("Loading registrations")
     this.http
-      .get('http://127.0.0.1:9000/api/registrations')
+      .get('/api/registrations')
       .subscribe((events: Registration[]) => {
         this.logger.info("Received ", events.length, " registration entries")
         this.events = [];
@@ -213,6 +213,8 @@ export class CscComponent {
   openNewRegistrationDialog(): void {
     this.registration = {};
     this.shifted = false;
+    this.fromDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
+    this.toDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
     this.conflicts = [];
     this.registration.username = this.cookieService.get("username");
     this.registration.start = new Date();
@@ -234,7 +236,7 @@ export class CscComponent {
     if (!confirm("Wirklich die Reservierung löschen?")) {
       return;
     }
-    this.http.delete('http://127.0.0.1:9000/api/registrations/' + event.id).subscribe(response => {
+    this.http.delete('/api/registrations/' + event.id).subscribe(response => {
       this.logger.info(response);
       this.fetchEvents();
       this.toastService.show('Reservierung gelöscht', {classname: 'bg-success text-light'});
@@ -247,7 +249,7 @@ export class CscComponent {
 
     this.logger.info("Adding new registration: ", registration);
     this.cookieService.set("username", registration.username);
-    this.http.post('http://127.0.0.1:9000/api/registrations', registration).subscribe(response => {
+    this.http.post('/api/registrations', registration).subscribe(response => {
       this.logger.info(response);
       this.ngbModalRef.close();
       this.toastService.show('Reservierung hinzugefügt', {classname: 'bg-success text-light'});
@@ -260,7 +262,7 @@ export class CscComponent {
 
   submit() {
     this.onTimeChange();
-    this.http.post('http://127.0.0.1:9000/api/registrations/conflictCheck', this.registration).subscribe((response: ConflictCheckResponse) => {
+    this.http.post('/api/registrations/conflictCheck', this.registration).subscribe((response: ConflictCheckResponse) => {
       this.logger.info(response);
       this.shifted = response.shifted;
       this.conflicts = response.conflicts;
@@ -287,7 +289,7 @@ export class CscComponent {
   toDate: NgbDate | null = null;
 
   private ngDateToReservation(date: NgbDate, otherDate: Date = null) {
-    return new Date(date.year, date.month, date.day, otherDate == null ? 0 : otherDate.getHours(), 0);
+    return new Date(date.year, date.month - 1, date.day, otherDate == null ? 0 : otherDate.getHours(), 0);
   }
 
   onTimeChange() {
