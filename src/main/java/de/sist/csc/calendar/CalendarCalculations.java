@@ -34,7 +34,7 @@ public class CalendarCalculations {
         /*
         Nicht möglich:
         Konflikt:       |               |
-        Registrierung:      |       |
+        Reservierung:      |       |
         */
 
         if (isBefore(earlier.getStart(), shifted.getStart()) && isAfter(earlier.getEnd(), shifted.getEnd())) {
@@ -46,21 +46,21 @@ public class CalendarCalculations {
 
         /*
         Konflikt:       |       |
-        Registrierung:      |       |
+        Reservierung:      |       |
         Ergebnis:               |   |
         */
         if (isBefore(earlier.getStart(), shifted.getStart()) && isAfter(earlier.getEnd(), shifted.getStart())) {
-            // Ende vom Konflikt überlappt Registrierungsstart -> beginne später
+            // Ende vom Konflikt überlappt Reservierungsstart -> beginne später
             shifted.setStart(earlier.getEnd());
         }
 
          /*
         Konflikt:           |       |
-        Registrierung:  |       |
+        Reservierung:  |       |
         Ergebnis:       |   |
         */
         if (isBefore(shifted.getStart(), later.getStart()) && isAfter(shifted.getEnd(), later.getStart())) {
-            // Anfang vom Konflikt überlappt Registrierungsstart -> ende früher
+            // Anfang vom Konflikt überlappt Reservierungsstart -> ende früher
             shifted.setEnd(later.getStart());
         }
 

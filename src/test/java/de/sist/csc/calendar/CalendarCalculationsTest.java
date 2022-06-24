@@ -62,7 +62,7 @@ class CalendarCalculationsTest {
         /*
         Conflict:       |     |
         Conflict:                           |       |
-        Registrierung:     |                  |
+        Reservierung:     |                  |
         Ergebnis:             |             |
         */
         final Registration r10_16 = CalendarCalculationsTest.getRegistration(20, 10, 20, 16, "", "");

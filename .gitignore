@@ -28,5 +28,4 @@ ui/node_modules
 *.log
 *.gz
 cache/
-registrations.json
-/backup
+*.db

@@ -647,10 +647,13 @@ class CscComponent {
         this.ngbModalRef = this.modalService.open(this.modalContent, { size: 'lg' });
     }
     deleteRegistration(event) {
+        if (!confirm("Wirklich die Reservierung löschen?")) {
+            return;
+        }
         this.http.delete('http://127.0.0.1:9000/api/registrations/' + event.id).subscribe(response => {
             this.logger.info(response);
             this.fetchEvents();
-            this.toastService.show('Registrierung gelöscht', { classname: 'bg-success text-light' });
+            this.toastService.show('Reservierung gelöscht', { classname: 'bg-success text-light' });
         }, response => {
             this.toastService.show(response, { classname: 'bg-danger text-light' });
         });
@@ -661,7 +664,7 @@ class CscComponent {
         this.http.post('http://127.0.0.1:9000/api/registrations', registration).subscribe(response => {
             this.logger.info(response);
             this.ngbModalRef.close();
-            this.toastService.show('Registrierung hinzugefügt', { classname: 'bg-success text-light' });
+            this.toastService.show('Reservierung hinzugefügt', { classname: 'bg-success text-light' });
             this.fetchEvents();
         }, response => {
             this.toastService.show(response, { classname: 'bg-danger text-light' });
