@@ -6,11 +6,10 @@ import {CalendarModule, DateAdapter} from 'angular-calendar';
 import {adapterFactory} from 'angular-calendar/date-adapters/date-fns';
 import {NgbAlertModule, NgbModalModule} from '@ng-bootstrap/ng-bootstrap';
 import {CscComponent, DayColorPipe, FormatDayRegistrationPipe} from "@calendar/calendar.component";
-import {NewRegistrationComponent} from './new-registration/new-registration.component';
 
 
 @NgModule({
-  declarations: [CscComponent, FormatDayRegistrationPipe, DayColorPipe, NewRegistrationComponent],
+  declarations: [CscComponent, FormatDayRegistrationPipe, DayColorPipe],
   exports: [CscComponent],
 
   imports: [

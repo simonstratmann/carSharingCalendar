@@ -4,7 +4,7 @@ import {HttpClient} from '@angular/common/http';
 import {Subject} from 'rxjs';
 import {NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {CalendarEvent, CalendarEventAction, CalendarMonthViewDay, CalendarView} from 'angular-calendar';
-import {Registration} from "@shared/carSharingCalendar";
+import {ConflictCheckResponse, Registration} from "@shared/carSharingCalendar";
 import {NGXLogger} from "ngx-logger";
 import {DatePipe, registerLocaleData} from "@angular/common";
 import localeDe from "@angular/common/locales/de";
@@ -71,7 +71,7 @@ function userToColor(user: String) {
 
 export class CscComponent {
   @ViewChild('eventModalContent', {static: false}) eventModalContent: TemplateRef<any>;
-
+  @ViewChild('newRegistrationModalContent', {static: false}) modalContent: TemplateRef<any>;
 
   view: CalendarView = CalendarView.Month;
 
@@ -87,7 +87,7 @@ export class CscComponent {
     event: CalendarEvent;
   };
 
-  newRegistrationModalData: Registration;
+  registration: Registration;
 
   actions: CalendarEventAction[] = [
     {
@@ -108,7 +108,7 @@ export class CscComponent {
 
   handleEvent(action: string, event: CalendarEvent): void {
     this.eventInfoModalData = {event, action};
-    this.modal.open(this.eventModalContent, {size: 'lg'});
+    this.modalService.open(this.eventModalContent, {size: 'lg'});
   }
 
   refresh = new Subject<void>();
@@ -116,7 +116,7 @@ export class CscComponent {
 
   activeDayIsOpen: boolean = false;
 
-  constructor(private modal: NgbModal, private http: HttpClient, private logger: NGXLogger, private changeDetection: ChangeDetectorRef, private toastService: ToastService, private cookieService: CookieService) {
+  constructor(private modalService: NgbModal, private http: HttpClient, private logger: NGXLogger, private changeDetection: ChangeDetectorRef, private toastService: ToastService, private cookieService: CookieService) {
     registerLocaleData(localeDe, 'de-DE', localeDeExtra);
   }
 
@@ -170,11 +170,24 @@ export class CscComponent {
   }
 
   private ngbModalRef: NgbModalRef;
+  shifted: boolean;
+  conflicts: Registration[] = [];
 
 
-  addEvent() {
-
-
+  open(): void {
+    this.registration = {};
+    this.shifted = false;
+    this.conflicts = [];
+    this.registration.username = this.cookieService.get("username");
+    this.registration.start = new Date();
+    this.registration.start.setMinutes(0);
+    this.registration.start.setSeconds(0);
+    this.registration.start.setHours(this.registration.start.getHours() + 1);
+    this.registration.end = new Date();
+    this.registration.end.setMinutes(0);
+    this.registration.end.setSeconds(0);
+    this.registration.end.setHours(this.registration.end.getHours() + 2);
+    this.ngbModalRef = this.modalService.open(this.modalContent, {size: 'lg'});
   }
 
   deleteRegistration(event: Registration) {
@@ -187,13 +200,43 @@ export class CscComponent {
     })
   }
 
+  addRegistration(registration: Registration) {
 
+    this.logger.info("Adding new registration: ", registration);
+    this.cookieService.set("username", registration.username);
+    this.http.post('http://127.0.0.1:9000/api/registrations', registration).subscribe(response => {
+      this.logger.info(response);
+      this.toastService.show('Registrierung hinzugefügt', {classname: 'bg-success text-light'});
+      this.fetchEvents();
+
+    }, response => {
+      this.toastService.show(response, {classname: 'bg-danger text-light'});
+    })
+  }
+
+  submit() {
+    this.http.post('http://127.0.0.1:9000/api/registrations/conflictCheck', this.registration).subscribe((response: ConflictCheckResponse) => {
+      this.logger.info(response);
+      this.shifted = response.shifted;
+      this.conflicts = response.conflicts;
+      if (response.conflicts.length === 0) {
+        this.addRegistration(this.registration);
+      } else {
+        this.logger.info("Conflicts detected - not closing new registration modal");
+        if (response.shifted) {
+          this.registration = response.registration;
+        }
+      }
+    }, response => {
+      this.toastService.show(response, {classname: 'bg-danger text-light'});
+    });
+  }
 }
 
 @Pipe({name: 'formatDayRegistration'})
 export class FormatDayRegistrationPipe implements PipeTransform {
 
-  constructor(private datepipe: DatePipe, private logger: NGXLogger) {
+  constructor(private datepipe: DatePipe) {
   }
 
   transform(event: CalendarEvent, day: CalendarMonthViewDay) {

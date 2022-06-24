@@ -4,6 +4,7 @@ package de.sist.csc.calendar;
 import com.google.common.collect.Iterables;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class CalendarCalculations {
 
     public static Registration tryShiftRegistration(Registration registration, List<Registration> conflicts) {
         final Registration shifted = new Registration(registration.getId(), registration.getStart(), registration.getEnd(), registration.getUsername(), registration.getTitle(), registration.getText());
+        conflicts = new ArrayList<>(conflicts);
         conflicts.sort(Comparator.comparing(Registration::getStart));
         final Registration earlier = conflicts.get(0);
         final Registration later = Iterables.getLast(conflicts);
