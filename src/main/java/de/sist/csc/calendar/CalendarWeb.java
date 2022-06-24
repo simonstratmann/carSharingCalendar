@@ -1,7 +1,10 @@
 // (C) 2022 PPI AG
-package de.sist.csc.web;
+package de.sist.csc.calendar;
 
 import de.sist.csc.model.Registration;
+import de.sist.csc.web.ConflictCheckResponse;
+import de.sist.csc.web.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,9 +16,12 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
+@SuppressWarnings("RedundantIfStatement")
 @RestController
+@Slf4j
 public class CalendarWeb {
 
 
@@ -48,5 +54,22 @@ public class CalendarWeb {
         registrations.add(registration);
         return new Response(true, null);
     }
+
+    @PostMapping(value = "/api/registrationsConflictCheck", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ConflictCheckResponse checkForConflicting(@RequestBody Registration registration) throws Exception {
+        final List<Registration> conflicts = registrations.stream().filter(x -> CalendarCalculations.isOverlapping(x, registration)).collect(Collectors.toList());
+        log.debug("Found {} conflicts for {}: {}", conflicts.size(), registration, conflicts);
+        if (conflicts.isEmpty()) {
+            return ConflictCheckResponse.noConflicts(registration);
+        }
+        log.debug("Trying to shift registration to avoid conflicts");
+        final Registration shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        if (shifted.equals(registration)) {
+            return ConflictCheckResponse.shifted(shifted, conflicts);
+        }
+        return ConflictCheckResponse.conflict(registration, conflicts);
+    }
+
+
 
 }
