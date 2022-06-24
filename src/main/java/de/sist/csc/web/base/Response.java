@@ -1,5 +1,5 @@
 // (C) 2022 PPI AG
-package de.sist.csc.web;
+package de.sist.csc.web.base;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

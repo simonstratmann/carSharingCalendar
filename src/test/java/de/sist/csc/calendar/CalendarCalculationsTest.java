@@ -1,6 +1,7 @@
 package de.sist.csc.calendar;
 
-import de.sist.csc.model.Registration;
+import com.fasterxml.jackson.core.type.TypeReference;
+import de.sist.csc.Jackson;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.Arrays;
@@ -88,6 +90,19 @@ class CalendarCalculationsTest {
 
     private static LocalDateTime getLocalDateTime(int dayOfMonth, int hour) {
         return LocalDateTime.of(2022, Month.JUNE, dayOfMonth, hour, 0);
+    }
+
+    @Test
+    public void should() throws Exception {
+        final File resultFile = new File("registrations.json");
+        Jackson.OBJECT_MAPPER.writeValue(resultFile, Arrays.asList(getRegistration(13, 10, 17, 15, "title", "Kuni"),
+                getRegistration(20, 10, 20, 22, "title", "Hilde"),
+                getRegistration(23, 10, 23, 15, null, "Marianne"),
+                getRegistration(23, 16, 23, 18, null, "Simon")
+        ));
+
+        Jackson.OBJECT_MAPPER.readValue(resultFile, new TypeReference<>() {
+        });
     }
 
 }

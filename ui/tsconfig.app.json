@@ -27,6 +27,12 @@
       ],
       "@models/*": [
         "src/app/shared/models/*"
+      ],
+      "@toast/*": [
+        "src/app/toast/*"
+      ],
+      "@routing/*": [
+        "src/app/routing/*"
       ]
     }
   },

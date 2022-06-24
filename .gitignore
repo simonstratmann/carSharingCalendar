@@ -28,4 +28,5 @@ ui/node_modules
 *.log
 *.gz
 cache/
-notification.json
+registrations.json
+/backup

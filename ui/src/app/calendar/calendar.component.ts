@@ -4,11 +4,13 @@ import {HttpClient} from '@angular/common/http';
 import {Subject} from 'rxjs';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {CalendarEvent, CalendarEventAction, CalendarMonthViewDay, CalendarView} from 'angular-calendar';
-import {CarSharingEvent} from "@shared/carSharingCalendar";
+import {Registration} from "@shared/carSharingCalendar";
 import {NGXLogger} from "ngx-logger";
 import {DatePipe, registerLocaleData} from "@angular/common";
 import localeDe from "@angular/common/locales/de";
 import localeDeExtra from "@angular/common/locales/extra/de";
+import {ToastService} from "@app/toast/toast-service";
+import {CookieService} from "ngx-cookie-service";
 
 const colors: any = {
   red: {
@@ -75,7 +77,8 @@ export class CscComponent {
 
   CalendarView = CalendarView;
 
-  events: CalendarEvent<{ event: CarSharingEvent, style: Style }>[];
+  events: CalendarEvent<{ event: Registration, style: Style }>[];
+  loaded: boolean = false;
 
   viewDate: Date = new Date();
 
@@ -84,7 +87,7 @@ export class CscComponent {
     event: CalendarEvent;
   };
 
-  newRegistrationModalData: CarSharingEvent;
+  newRegistrationModalData: Registration;
 
   actions: CalendarEventAction[] = [
     {
@@ -99,6 +102,10 @@ export class CscComponent {
     },
   ];
 
+  ngOnInit(): void {
+    this.fetchEvents();
+  }
+
   handleEvent(action: string, event: CalendarEvent): void {
     this.eventInfoModalData = {event, action};
     this.modal.open(this.eventModalContent, {size: 'lg'});
@@ -109,13 +116,10 @@ export class CscComponent {
 
   activeDayIsOpen: boolean = false;
 
-  constructor(private modal: NgbModal, private http: HttpClient, private logger: NGXLogger, private changeDetection: ChangeDetectorRef) {
+  constructor(private modal: NgbModal, private http: HttpClient, private logger: NGXLogger, private changeDetection: ChangeDetectorRef, private toastService: ToastService, private cookieService: CookieService) {
     registerLocaleData(localeDe, 'de-DE', localeDeExtra);
   }
 
-  ngOnInit(): void {
-    this.fetchEvents();
-  }
 
   dayClicked({date, events}: { date: Date; events: CalendarEvent[] }): void {
     if (isSameMonth(date, this.viewDate)) {
@@ -125,12 +129,11 @@ export class CscComponent {
     }
   }
 
-
   fetchEvents(): void {
     this.logger.info("Loading registrations")
     this.http
       .get('http://127.0.0.1:9000/api/registrations')
-      .subscribe((events: CarSharingEvent[]) => {
+      .subscribe((events: Registration[]) => {
         this.logger.info("Received ", events.length, " registration entries")
         this.events = [];
         events.forEach(event => {
@@ -139,7 +142,7 @@ export class CscComponent {
             start: event.start,
             actions: this.actions,
             end: event.end,
-            color: userToColor(event.user),
+            color: userToColor(event.username),
             meta: {
               style: {
                 backgroundColor: "",
@@ -149,7 +152,8 @@ export class CscComponent {
 
             }
           });
-        })
+        });
+        this.loaded = true;
         this.logger.info(this.events.length);
         this.changeDetection.detectChanges();
       });
@@ -167,21 +171,38 @@ export class CscComponent {
 
   addEvent() {
     this.newRegistrationModalData = {};
+    this.newRegistrationModalData.username = this.cookieService.get("username");
     this.newRegistrationModalData.start = new Date();
+    this.newRegistrationModalData.start.setMinutes(0);
+    this.newRegistrationModalData.start.setHours(this.newRegistrationModalData.start.getHours() + 1);
     this.newRegistrationModalData.end = new Date();
-    this.modal.open(this.newRegistrationModalContent, {size: 'lg'}).result.then((result) => {
+    this.newRegistrationModalData.end.setMinutes(0);
+    this.newRegistrationModalData.end.setHours(this.newRegistrationModalData.end.getHours() + 2);
+    this.modal.open(this.newRegistrationModalContent, {size: 'lg'}).result.then((result: Registration) => {
       if (!result) {
         return;
       }
       this.logger.info("Adding new registration: ", result);
+      this.cookieService.set("username", result.username);
       this.http.post('http://127.0.0.1:9000/api/registrations', result).subscribe(response => {
         this.logger.info(response);
-
         this.fetchEvents();
+        this.toastService.show('Registrierung hinzugefügt', {classname: 'bg-success text-light'});
+
       }, response => {
-        this.logger.error(response);
+        this.toastService.show(response, {classname: 'bg-danger text-light'});
       })
     });
+  }
+
+  deleteRegistration(event: Registration) {
+    this.http.delete('http://127.0.0.1:9000/api/registrations/' + event.id).subscribe(response => {
+      this.logger.info(response);
+      this.fetchEvents();
+      this.toastService.show('Registrierung gelöscht', {classname: 'bg-success text-light'});
+    }, response => {
+      this.toastService.show(response, {classname: 'bg-danger text-light'});
+    })
   }
 }
 
@@ -192,7 +213,7 @@ export class FormatDayRegistrationPipe implements PipeTransform {
   }
 
   transform(event: CalendarEvent, day: CalendarMonthViewDay) {
-    let fullDesc = event.meta.event.user;
+    let fullDesc = event.meta.event.username;
     let timeDesc = "";
     if (event.start < day.date && event.end > endOfDay(day.date)) {
       timeDesc = "";

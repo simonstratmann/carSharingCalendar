@@ -13,7 +13,6 @@ import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {AngularDateHttpInterceptor} from "@shared/DateHttpInterceptor";
 import {LogbookComponent} from './logbook/logbook.component';
 
-
 @NgModule({
   declarations: [
     AppComponent,
@@ -44,7 +43,6 @@ export class AppModule {
 
 
   constructor() {
-
 
   }
 }

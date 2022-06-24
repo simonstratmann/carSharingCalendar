@@ -2,7 +2,6 @@
 package de.sist.csc.calendar;
 
 import com.google.common.collect.Iterables;
-import de.sist.csc.model.Registration;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -14,7 +13,7 @@ public class CalendarCalculations {
     private CalendarCalculations() {
     }
 
-    static boolean isOverlapping(Registration a, Registration b) {
+    public static boolean isOverlapping(Registration a, Registration b) {
         if (b.getStart().isBefore(a.getStart()) && b.getEnd().isAfter(a.getStart())) {
             return true;
         }
@@ -24,8 +23,8 @@ public class CalendarCalculations {
         return false;
     }
 
-    static Registration tryShiftRegistration(Registration registration, List<Registration> conflicts) {
-        final Registration shifted = new Registration(registration.getStart(), registration.getEnd(), registration.getUser(), registration.getTitle(), registration.getText());
+    public static Registration tryShiftRegistration(Registration registration, List<Registration> conflicts) {
+        final Registration shifted = new Registration(registration.getId(), registration.getStart(), registration.getEnd(), registration.getUsername(), registration.getTitle(), registration.getText());
         conflicts.sort(Comparator.comparing(Registration::getStart));
         final Registration earlier = conflicts.get(0);
         final Registration later = Iterables.getLast(conflicts);
