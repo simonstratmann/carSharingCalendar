@@ -153,6 +153,20 @@ export class CscComponent {
             }
           });
         });
+        this.events.sort((a, b) => {
+          console.log(a, b);
+          if (a.end < b.start)
+            return -1;
+          if (a.start > b.end)
+            return 1;
+
+          if (a.start < b.start)
+            return -1;
+          if (b.start > a.end)
+            return 1;
+
+          return 0;
+        });
         this.loaded = true;
         this.logger.info(this.events.length);
         this.changeDetection.detectChanges();
@@ -206,6 +220,7 @@ export class CscComponent {
     this.cookieService.set("username", registration.username);
     this.http.post('http://127.0.0.1:9000/api/registrations', registration).subscribe(response => {
       this.logger.info(response);
+      this.ngbModalRef.close();
       this.toastService.show('Registrierung hinzugefügt', {classname: 'bg-success text-light'});
       this.fetchEvents();
 

@@ -53,11 +53,33 @@ public class CalendarWeb {
             return ConflictCheckResponse.noConflicts(registration);
         }
         log.debug("Trying to shift registration to avoid conflicts");
-        final Registration shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        Registration shifted = tryShift(registration);
         if (!shifted.equals(registration)) {
             return ConflictCheckResponse.shifted(shifted, conflicts);
         }
         return ConflictCheckResponse.conflict(registration, conflicts);
+    }
+
+    //Wir führen das mehrfach aus, um alle Konflikte zu findend und zu behandeln
+    private Registration tryShift(Registration registration) {
+        Registration shifted = registration;
+        List<Registration> conflicts = findConflicts(shifted);
+        if (!conflicts.isEmpty()) {
+            shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        }
+        conflicts = findConflicts(shifted);
+        if (!conflicts.isEmpty()) {
+            shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        }
+        conflicts = findConflicts(shifted);
+        if (!conflicts.isEmpty()) {
+            shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        }
+        return shifted;
+    }
+
+    private List<Registration> findConflicts(Registration registration) {
+        return calendar.getRegistrations().stream().filter(x -> CalendarCalculations.isOverlapping(x, registration)).collect(Collectors.toList());
     }
 
 

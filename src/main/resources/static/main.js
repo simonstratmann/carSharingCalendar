@@ -364,12 +364,13 @@ function CscComponent_ng_template_31_span_8_Template(rf, ctx) { if (rf & 1) {
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵelementStart"](0, "span");
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵtext"](1);
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵpipe"](2, "formatDayRegistration");
+    _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵelement"](3, "br");
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵelementEnd"]();
 } if (rf & 2) {
     const event_r48 = ctx.$implicit;
     const day_r42 = _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵnextContext"]().day;
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵadvance"](1);
-    _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵtextInterpolate1"](" ", _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵpipeBind2"](2, 1, event_r48, day_r42), " ");
+    _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵtextInterpolate1"](" ", _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵpipeBind2"](2, 1, event_r48, day_r42), "");
 } }
 const _c2 = function (a0) { return { "background-color": a0 }; };
 function CscComponent_ng_template_31_Template(rf, ctx) { if (rf & 1) {
@@ -382,7 +383,7 @@ function CscComponent_ng_template_31_Template(rf, ctx) { if (rf & 1) {
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵpipe"](6, "calendarDate");
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵelementEnd"]()();
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵtemplate"](7, CscComponent_ng_template_31_span_7_Template, 1, 0, "span", 4);
-    _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵtemplate"](8, CscComponent_ng_template_31_span_8_Template, 3, 4, "span", 22);
+    _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵtemplate"](8, CscComponent_ng_template_31_span_8_Template, 4, 4, "span", 22);
     _angular_core__WEBPACK_IMPORTED_MODULE_3__["ɵɵelementEnd"]();
 } if (rf & 2) {
     const day_r42 = ctx.day;
@@ -607,6 +608,18 @@ class CscComponent {
                     }
                 });
             });
+            this.events.sort((a, b) => {
+                console.log(a, b);
+                if (a.end < b.start)
+                    return -1;
+                if (a.start > b.end)
+                    return 1;
+                if (a.start < b.start)
+                    return -1;
+                if (b.start > a.end)
+                    return 1;
+                return 0;
+            });
             this.loaded = true;
             this.logger.info(this.events.length);
             this.changeDetection.detectChanges();
@@ -647,6 +660,7 @@ class CscComponent {
         this.cookieService.set("username", registration.username);
         this.http.post('http://127.0.0.1:9000/api/registrations', registration).subscribe(response => {
             this.logger.info(response);
+            this.ngbModalRef.close();
             this.toastService.show('Registrierung hinzugefügt', { classname: 'bg-success text-light' });
             this.fetchEvents();
         }, response => {

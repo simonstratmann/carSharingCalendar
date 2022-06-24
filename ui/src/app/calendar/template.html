@@ -225,7 +225,7 @@
       <span *ngIf="day.badgeTotal === 0">
     </span>
       <span *ngFor="let event of day.events">
-      {{event | formatDayRegistration: day}}
+      {{event | formatDayRegistration: day}}<br>
     </span>
     </span>
 </ng-template>
