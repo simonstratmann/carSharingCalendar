@@ -45,7 +45,7 @@ public class CalendarWeb {
         return new Response(true, null);
     }
 
-    @PostMapping(value = "/api/registrationsConflictCheck", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/api/registrations/ConflictCheck", produces = MediaType.APPLICATION_JSON_VALUE)
     public ConflictCheckResponse checkForConflicting(@RequestBody Registration registration) throws Exception {
         final List<Registration> conflicts = calendar.getRegistrations().stream().filter(x -> CalendarCalculations.isOverlapping(x, registration)).collect(Collectors.toList());
         log.debug("Found {} conflicts for {}: {}", conflicts.size(), registration, conflicts);

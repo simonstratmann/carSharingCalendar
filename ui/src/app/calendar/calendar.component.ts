@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Pipe, PipeTransfo
 import {endOfDay, isSameDay, isSameMonth, startOfDay,} from 'date-fns';
 import {HttpClient} from '@angular/common/http';
 import {Subject} from 'rxjs';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {CalendarEvent, CalendarEventAction, CalendarMonthViewDay, CalendarView} from 'angular-calendar';
 import {Registration} from "@shared/carSharingCalendar";
 import {NGXLogger} from "ngx-logger";
@@ -71,7 +71,7 @@ function userToColor(user: String) {
 
 export class CscComponent {
   @ViewChild('eventModalContent', {static: false}) eventModalContent: TemplateRef<any>;
-  @ViewChild('newRegistrationModalContent', {static: false}) newRegistrationModalContent: TemplateRef<any>;
+
 
   view: CalendarView = CalendarView.Month;
 
@@ -169,30 +169,12 @@ export class CscComponent {
     this.activeDayIsOpen = false;
   }
 
-  addEvent() {
-    this.newRegistrationModalData = {};
-    this.newRegistrationModalData.username = this.cookieService.get("username");
-    this.newRegistrationModalData.start = new Date();
-    this.newRegistrationModalData.start.setMinutes(0);
-    this.newRegistrationModalData.start.setHours(this.newRegistrationModalData.start.getHours() + 1);
-    this.newRegistrationModalData.end = new Date();
-    this.newRegistrationModalData.end.setMinutes(0);
-    this.newRegistrationModalData.end.setHours(this.newRegistrationModalData.end.getHours() + 2);
-    this.modal.open(this.newRegistrationModalContent, {size: 'lg'}).result.then((result: Registration) => {
-      if (!result) {
-        return;
-      }
-      this.logger.info("Adding new registration: ", result);
-      this.cookieService.set("username", result.username);
-      this.http.post('http://127.0.0.1:9000/api/registrations', result).subscribe(response => {
-        this.logger.info(response);
-        this.fetchEvents();
-        this.toastService.show('Registrierung hinzugefügt', {classname: 'bg-success text-light'});
+  private ngbModalRef: NgbModalRef;
 
-      }, response => {
-        this.toastService.show(response, {classname: 'bg-danger text-light'});
-      })
-    });
+
+  addEvent() {
+
+
   }
 
   deleteRegistration(event: Registration) {
@@ -204,6 +186,8 @@ export class CscComponent {
       this.toastService.show(response, {classname: 'bg-danger text-light'});
     })
   }
+
+
 }
 
 @Pipe({name: 'formatDayRegistration'})
