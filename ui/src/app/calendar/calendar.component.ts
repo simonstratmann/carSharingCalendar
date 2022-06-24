@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Pipe, PipeTransfo
 import {endOfDay, isSameDay, isSameMonth, startOfDay,} from 'date-fns';
 import {HttpClient} from '@angular/common/http';
 import {Subject} from 'rxjs';
-import {NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
+import {NgbDate, NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {CalendarEvent, CalendarEventAction, CalendarMonthViewDay, CalendarView} from 'angular-calendar';
 import {ConflictCheckResponse, Registration} from "@shared/carSharingCalendar";
 import {NGXLogger} from "ngx-logger";
@@ -64,9 +64,31 @@ function userToColor(user: String) {
         background-color: #f5f5f5;
         padding: 15px;
       }
+
+      .custom-day {
+        text-align: center;
+        padding: 0.185rem 0.25rem;
+        display: inline-block;
+        height: 2rem;
+        width: 2rem;
+      }
+
+      .custom-day.focused {
+        background-color: #e6e6e6;
+      }
+
+      .custom-day.range, .custom-day:hover {
+        background-color: rgb(2, 117, 216);
+        color: white;
+      }
+
+      .custom-day.faded {
+        background-color: rgba(2, 117, 216, 0.5);
+      }
     `,
   ],
   templateUrl: 'template.html',
+
 })
 
 export class CscComponent {
@@ -138,7 +160,7 @@ export class CscComponent {
         this.events = [];
         events.forEach(event => {
           this.events.push({
-            title: event.title,
+            title: event.username + ": " + event.title,
             start: event.start,
             actions: this.actions,
             end: event.end,
@@ -188,7 +210,7 @@ export class CscComponent {
   conflicts: Registration[] = [];
 
 
-  open(): void {
+  openNewRegistrationDialog(): void {
     this.registration = {};
     this.shifted = false;
     this.conflicts = [];
@@ -201,6 +223,10 @@ export class CscComponent {
     this.registration.end.setMinutes(0);
     this.registration.end.setSeconds(0);
     this.registration.end.setHours(this.registration.end.getHours() + 2);
+    this.timeFrom.hour = this.registration.start.getHours();
+    this.timeFrom.minute = this.registration.start.getMinutes();
+    this.timeTo.hour = this.registration.end.getHours();
+    this.timeTo.minute = this.registration.end.getMinutes();
     this.ngbModalRef = this.modalService.open(this.modalContent, {size: 'lg'});
   }
 
@@ -233,6 +259,7 @@ export class CscComponent {
   }
 
   submit() {
+    this.onTimeChange();
     this.http.post('http://127.0.0.1:9000/api/registrations/conflictCheck', this.registration).subscribe((response: ConflictCheckResponse) => {
       this.logger.info(response);
       this.shifted = response.shifted;
@@ -249,6 +276,58 @@ export class CscComponent {
       this.toastService.show(response, {classname: 'bg-danger text-light'});
     });
   }
+
+  // Date range / time selection
+
+  hoveredDate: NgbDate | null = null;
+  timeFrom = {hour: 12, minute: 0};
+  timeTo = {hour: 12, minute: 0};
+
+  fromDate: NgbDate;
+  toDate: NgbDate | null = null;
+
+  private ngDateToReservation(date: NgbDate, otherDate: Date = null) {
+    return new Date(date.year, date.month, date.day, otherDate == null ? 0 : otherDate.getHours(), 0);
+  }
+
+  onTimeChange() {
+    console.log(this.timeFrom.hour);
+    this.registration.start = new Date(this.registration.start);
+    this.registration.start.setHours(this.timeFrom.hour);
+    this.registration.start.setMinutes(this.timeFrom.minute);
+    this.registration.end = new Date(this.registration.end);
+    this.registration.end.setHours(this.timeTo.hour);
+    this.registration.end.setMinutes(this.timeTo.minute);
+  }
+
+  onDateSelection(date: NgbDate) {
+    if (!this.fromDate && !this.toDate) {
+      this.fromDate = date;
+      this.registration.start = this.ngDateToReservation(this.fromDate, this.registration.start);
+    } else if (this.fromDate && !this.toDate && date.after(this.fromDate)) {
+      this.toDate = date;
+      this.registration.end = this.ngDateToReservation(this.toDate, this.registration.end);
+    } else {
+      this.toDate = null;
+      this.fromDate = date;
+      this.registration.start = this.ngDateToReservation(this.fromDate, this.registration.start);
+      this.registration.end = this.ngDateToReservation(this.fromDate, this.registration.end);
+    }
+  }
+
+  isHovered(date: NgbDate) {
+    return this.fromDate && !this.toDate && this.hoveredDate && date.after(this.fromDate) && date.before(this.hoveredDate);
+  }
+
+  isInside(date: NgbDate) {
+    return this.toDate && date.after(this.fromDate) && date.before(this.toDate);
+  }
+
+  isRange(date: NgbDate) {
+    return date.equals(this.fromDate) || (this.toDate && date.equals(this.toDate)) || this.isInside(date) || this.isHovered(date);
+  }
+
+
 }
 
 @Pipe({name: 'formatDayRegistration'})
@@ -272,8 +351,8 @@ export class FormatDayRegistrationPipe implements PipeTransform {
     if (timeDesc) {
       fullDesc += ": " + timeDesc
     }
-    if (event.title) {
-      fullDesc += " (" + event.title + ")";
+    if (event.meta.event.title) {
+      fullDesc += " (" + event.meta.event.title + ")";
     }
     return fullDesc;
   }

@@ -93,6 +93,8 @@
       locale="de-DE"
       [refresh]="refresh"
       (eventClicked)="handleEvent('Clicked', $event.event)"
+      dayStartHour="6"
+      dayEndHour="23"
     >
       <!--    (eventTimesChanged)="eventTimesChanged($event)"-->
       <!--  >-->
@@ -104,19 +106,19 @@
       locale="de-DE"
       [refresh]="refresh"
       (eventClicked)="handleEvent('Clicked', $event.event)"
+      dayStartHour="6"
+      dayEndHour="23"
     >
       <!--    (eventTimesChanged)="eventTimesChanged($event)"-->
       <!--  >-->
     </mwl-calendar-day-view>
   </div>
 
-  <!-- Everything you see below is just for the demo, you don't need to include it in your app -->
-
   <br/><br/><br/>
 
   <h3>
     Alle Reservierungen
-    <button class="btn btn-primary float-right" (click)="open()">
+    <button class="btn btn-primary float-right" (click)="openNewRegistrationDialog()">
       Neue Reservierung
     </button>
     <div class="clearfix"></div>
@@ -170,7 +172,7 @@
           <input
             type="text"
             class="form-control"
-            [(ngModel)]="event.title"
+            [(ngModel)]="event.meta.event.title"
             (keyup)="refresh.next()"
           />
         </td>
@@ -196,9 +198,9 @@
 <ng-template #eventModalContent let-close="close">
   <div class="modal-body">
     <div>
+      BenutzerIn: {{eventInfoModalData?.event.meta.event.username}}<br>
       Start: {{eventInfoModalData?.event.start | date: "d.M.y H:mm"}}<br>
       Ende: {{eventInfoModalData?.event.end | date: "d.M.y H:mm"}}<br>
-      BenutzerIn: {{eventInfoModalData?.event.meta.event.user}}<br>
       Titel: {{eventInfoModalData?.event.meta.event.title}}<br><br>
       {{eventInfoModalData?.event.meta.event.text}}
     </div>
@@ -231,6 +233,17 @@
 </ng-template>
 
 
+<ng-template #dateRangeTemplate let-date let-focused="focused">
+  <span class="custom-day"
+        [class.focused]="focused"
+        [class.range]="isRange(date)"
+        [class.faded]="isHovered(date) || isInside(date)"
+        (mouseenter)="hoveredDate = date"
+        (mouseleave)="hoveredDate = null">
+    {{ date.day }}
+  </span>
+</ng-template>
+
 <ng-template #newRegistrationModalContent let-close="close">
   <div class="modal-body">
     <div>
@@ -254,42 +267,25 @@
           />
         </div>
         <div class="form-group">
-          <label>Start</label>
-          <input
-            class="form-control"
-            type="text"
-            mwlFlatpickr
-            name="start"
-            locale="de"
-            time24hr=true
-            [(ngModel)]="registration.start"
-            [altInput]="true"
-            [convertModelValue]="true"
-            [enableTime]="true"
-            dateFormat="Y-m-d H:i"
-            altFormat="j.nn.y H:i"
-            placeholder="Leer"
-          />
+          <label>Zeitraum</label><br>
+          <ngb-datepicker #dp (dateSelect)="onDateSelection($event)" [displayMonths]="1" [dayTemplate]="dateRangeTemplate" outsideDays="hidden">
+          </ngb-datepicker>
+          <br>
+          <div class="row">
+            <div class="col-md-2">
+              <ngb-timepicker [(ngModel)]="timeFrom" [minuteStep]="15" name="time" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+            </div>
+            <div class="col-md-1" style="width: 5%; margin-top: auto;margin-bottom: auto">
+              bis
+            </div>
+            <div class="col-md-2">
+              <ngb-timepicker [(ngModel)]="timeTo" [minuteStep]="15" name="time2" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+            </div>
+          </div>
+          {{registration.start | date: "d.M.y H:mm"}} - {{registration.end | date: "d.M.y H:mm"}}
         </div>
-        <div class="form-group">
-          <label>Ende</label>
-          <input
-            class="form-control"
-            type="text"
-            mwlFlatpickr
-            name="end"
-            locale="de"
-            time24hr=true
-            [(ngModel)]="registration.end"
-            [altInput]="true"
-            [convertModelValue]="true"
-            [enableTime]="true"
-            dateFormat="Y-m-d H:i"
-            altFormat="j.nn.y H:i"
-            placeholder="Leer"
-          />
-        </div>
-        <div class="form-group">
+
+        <div class="form-group" style="margin-top: 10px">
           <label>Text</label>
           <textarea
             class="form-control"
