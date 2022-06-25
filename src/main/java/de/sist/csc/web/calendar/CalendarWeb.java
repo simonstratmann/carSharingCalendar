@@ -37,8 +37,8 @@ public class CalendarWeb {
 
 
     @PostMapping(value = "/api/registrations", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Response addRegistration(@RequestBody Registration registration, @RequestParam Integer repetitions) throws Exception {
-        calendar.addRegistration(registration, repetitions == null ? 1 : repetitions);
+    public Response addRegistration(@RequestBody Registration registration) throws Exception {
+        calendar.addRegistration(registration);
         return new Response(true, null);
     }
 

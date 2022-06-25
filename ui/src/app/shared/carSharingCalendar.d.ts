@@ -13,7 +13,9 @@ export interface Registration {
 }
 
 export interface ConflictCheckResponse {
-  conflicts?: Registration[];
-  registration?: Registration;
-  shifted?: boolean;
+  blockingRegistrations?: Registration[];
+  shiftCausingRegistrations?: Registration[];
+  unchangedRegistrations?: Registration[];
+  shiftedRegistrations?: Registration[];
+  blockedRegistrations?: Registration[];
 }

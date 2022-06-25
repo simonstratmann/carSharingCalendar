@@ -291,39 +291,11 @@
               </div>
               <div class="row" style="margin-top: 20px">
                 <div class="col">
-                  Wiederhole für die nächsten Wochen: <input type="number" name="repetitions" [ngModel]="repetitions" style="width: 40px"/>
+                  Wiederhole für die nächsten Wochen: <input type="number" name="repetitions" min="1" [(ngModel)]="repetitions" style="width: 40px"/>
                 </div>
-
               </div>
             </div>
           </div>
-          <!--<div class="row">
-            <div class="col-md-4">
-          <ngb-datepicker #dp (dateSelect)="onDateSelection($event)" [displayMonths]="1" [dayTemplate]="dateRangeTemplate" outsideDays="hidden">
-          </ngb-datepicker>
-
-            </div>
-            <div class="col-md-16">
-              <div class="row">
-              <div class="col-md-2">
-                <ngb-timepicker [(ngModel)]="timeFrom" [minuteStep]="15" name="time" (ngModelChange)="onTimeChange()"></ngb-timepicker>
-              </div>
-              <div class="col-md-1" style="width: 5%; margin-top: 45px">
-                bis
-              </div>
-              <div class="col-md-2">
-                <ngb-timepicker [(ngModel)]="timeTo" [minuteStep]="15" name="time2" (ngModelChange)="onTimeChange()"></ngb-timepicker>
-              </div>
-              </div>
-              <div class="row">
-                <div class="col-md-5">
-                  Wiederholungen
-                </div>
-
-              </div>
-
-            </div>
-          </div>-->
           {{registration.start | date: "d.M.y H:mm"}} - {{registration.end | date: "d.M.y H:mm"}}
         </div>
 
@@ -340,21 +312,51 @@
       </form>
 
     </div>
-    <div *ngIf="shifted" style="margin-top: 20px">
+    <!-- Keine Wiederholung, der Termin wurde geshiftet    -->
+    <div *ngIf="conflicCheckResponse.shiftedRegistrations.length === 1 && repetitions === 1" style="margin-top: 20px">
       <ngb-alert [dismissible]="false">
         Der Termin wurde verändert, um andere Reservierungen zu berücksichtigen. Bitte neue Werte prüfen.<br>
         Folgende Konflikte haben sich mit der Reservierung überschnitten:<br>
-        <span *ngFor="let conflict of conflicts">
+        <span *ngFor="let conflict of conflicCheckResponse.shiftCausingRegistrations">
         {{conflict.username}}: {{conflict.start | date: "d.M.y H:mm"}} - {{conflict.end | date: "d.M.y H:mm"}}<br>
       </span>
       </ngb-alert>
     </div>
-    <ngb-alert [dismissible]="false" type="danger" *ngIf="conflicts.length > 0 && !shifted" style="margin-top: 20px">
-      <strong>Konflikte</strong> Folgende Konflikte verhindern die Reservierung:<br>
-      <span *ngFor="let conflict of conflicts">
+    <!-- Mehrere Termine aus der Reihe wurden geshiftet   -->
+    <div *ngIf="conflicCheckResponse.shiftedRegistrations.length > 0 && repetitions > 1" style="margin-top: 20px">
+      <ngb-alert [dismissible]="false">
+        Folgende Termine aus der Reihe mussten angepasst werden:<br>
+        <span *ngFor="let shifted of conflicCheckResponse.shiftedRegistrations">
+        {{shifted.username}}: {{shifted.start | date: "d.M.y H:mm"}} - {{shifted.end | date: "d.M.y H:mm"}}<br>
+      </span>
+        <br>
+        Folgende Konflikte haben sich mit der Reservierung überschnitten:<br>
+        <span *ngFor="let conflict of conflicCheckResponse.shiftCausingRegistrations">
         {{conflict.username}}: {{conflict.start | date: "d.M.y H:mm"}} - {{conflict.end | date: "d.M.y H:mm"}}<br>
       </span>
-    </ngb-alert>
+      </ngb-alert>
+    </div>
+    <div *ngIf="conflicCheckResponse.blockedRegistrations.length > 0" style="margin-top: 20px">
+      <ngb-alert [dismissible]="false">
+        Folgende Termine können wegen Konflikten nicht reserviert werden:<br>
+        <span *ngFor="let blocked of conflicCheckResponse.blockedRegistrations">
+          {{blocked.username}}: {{blocked.start | date: "d.M.y H:mm"}} - {{blocked.end | date: "d.M.y H:mm"}}<br>
+      </span>
+        <br>
+        Folgende Termine verursachen die Konflikte:<br>
+        <span *ngFor="let conflict of conflicCheckResponse.blockingRegistrations">
+          {{conflict.username}}: {{conflict.start | date: "d.M.y H:mm"}} - {{conflict.end | date: "d.M.y H:mm"}}<br>
+      </span>
+      </ngb-alert>
+    </div>
+    <div *ngIf="(conflicCheckResponse.blockedRegistrations.length > 0 || conflicCheckResponse.shiftedRegistrations.length > 0) && conflicCheckResponse.unchangedRegistrations.length > 0" style="margin-top: 20px">
+      <ngb-alert [dismissible]="false" type="success">
+        Folgende Termine können ohne Konflikte reserviert werden:<br>
+        <span *ngFor="let unchanged of conflicCheckResponse.unchangedRegistrations">
+          {{unchanged.username}}: {{unchanged.start | date: "d.M.y H:mm"}} - {{unchanged.end | date: "d.M.y H:mm"}}<br>
+      </span>
+      </ngb-alert>
+    </div>
 
   </div>
 

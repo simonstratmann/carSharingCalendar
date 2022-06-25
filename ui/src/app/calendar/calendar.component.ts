@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Pipe, PipeTransform, TemplateRef, ViewChild,} from '@angular/core';
 import {endOfDay, isSameDay, isSameMonth, startOfDay,} from 'date-fns';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Subject} from 'rxjs';
 import {NgbDate, NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {CalendarEvent, CalendarEventAction, CalendarMonthViewDay, CalendarView} from 'angular-calendar';
@@ -111,11 +111,12 @@ export class CscComponent {
 
   private newReservationModal: NgbModalRef;
   private reservationDetailModal: NgbModalRef;
-  shifted: boolean;
-  private shiftedShown: boolean = false;
-  conflicts: Registration[] = [];
-  registration: Registration;
+  public conflicCheckResponse: ConflictCheckResponse = {shiftedRegistrations: [], blockedRegistrations: [], unchangedRegistrations: [], blockingRegistrations: [], shiftCausingRegistrations: []};
+  conflictCheckResponseShown: boolean = false;
+  registration: Registration = {};
+  submittedRegistration: Registration = {};
   repetitions: number = 1;
+  submittedRepetitions: number = 1;
 
   actions: CalendarEventAction[] = [
     {
@@ -215,12 +216,13 @@ export class CscComponent {
 
   openNewRegistrationDialog(): void {
     this.registration = {};
-    this.shifted = false;
+    this.submittedRegistration = {};
+    this.conflicCheckResponse = {shiftedRegistrations: [], blockedRegistrations: [], unchangedRegistrations: [], blockingRegistrations: [], shiftCausingRegistrations: []};
     this.repetitions = 1;
-    this.shiftedShown = false;
+    this.submittedRepetitions = 1;
+    this.conflictCheckResponseShown = false;
     this.fromDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
     this.toDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
-    this.conflicts = [];
     this.registration.username = this.cookieService.get("username");
     this.registration.start = new Date();
     this.registration.start.setMinutes(0);
@@ -251,48 +253,64 @@ export class CscComponent {
     });
   }
 
-  addRegistration(registration: Registration) {
+  addRegistration(registration: Registration, doFinish: boolean) {
     this.logger.info("Adding new registration: ", registration);
     this.cookieService.set("username", registration.username);
     this.http.post('/api/registrations', registration).subscribe(response => {
       this.logger.info(response);
-      this.newReservationModal.close();
       this.toastService.show('Reservierung hinzugefügt', {classname: 'bg-success text-light'});
-      this.fetchEvents();
+      if (doFinish) {
+        this.newReservationModal.close();
+        this.fetchEvents();
+      }
 
     }, response => {
       this.toastService.show(response, {classname: 'bg-danger text-light'});
     })
   }
 
+
   submit() {
+    console.log("submit " + this.repetitions);
+    if (this.submittedRegistration === this.registration && this.submittedRepetitions == this.repetitions && this.conflicCheckResponse.shiftedRegistrations.length > 0 || this.conflicCheckResponse.unchangedRegistrations.length > 0) {
+      let registrationsToAdd = this.conflicCheckResponse.shiftedRegistrations.concat(this.conflicCheckResponse.unchangedRegistrations);
+      this.logger.info("Conflict check was already executed with shifted or unchanged registrations. Adding ", registrationsToAdd.length);
+      this.addRegistrationsAndCloseDialog(registrationsToAdd);
+      return;
+    }
+    this.submittedRepetitions = this.repetitions;
+    this.submittedRegistration = this.registration;
     this.onTimeChange();
     this.logger.info("Checking for conflicts with entry ", this.registration);
-    this.http.post('/api/registrations/conflictCheck', this.registration).subscribe((response: ConflictCheckResponse) => {
-      this.logger.info(response);
-      this.shifted = response.shifted;
-      this.conflicts = response.conflicts;
-      if (response.conflicts.length === 0) {
-        this.addRegistration(this.registration);
-      } else if (response.shifted) {
-        if (!this.shiftedShown) {
-          this.registration = response.registration;
-          this.logger.info("Registration shifted- not closing new registration modal: ", response.registration);
-          this.shiftedShown = true;
+    this.http.post('/api/registrations/conflictCheck', this.registration, {params: new HttpParams().set("repetitions", this.repetitions)})
+      .subscribe((response: ConflictCheckResponse) => {
+        this.logger.info("Conflict check response: ", response);
+        this.conflicCheckResponse = response;
+        if (response.shiftedRegistrations.length === 0 && response.blockedRegistrations.length === 0) {
+          this.logger.info("No shifted or blocked registrations")
+          this.logger.info("Adding ", response.unchangedRegistrations.length, " registrations after conflict check");
+          this.addRegistrationsAndCloseDialog(response.unchangedRegistrations);
         } else {
-          this.logger.info("Shifted already shown - user has accepted shifted registration: ", response.registration);
-          this.addRegistration(response.registration);
+          this.logger.info("Registrations shifted or blocked - not closing new registration modal as this is the first time the user submitted the request");
+          this.conflictCheckResponseShown = true;
+          if (response.shiftedRegistrations.length === 1 && this.repetitions == 1) {
+            this.logger.info("Simple registration without repetitions shifted - updating the shown data")
+            this.registration = response.shiftedRegistrations[0];
+          }
         }
-      } else {
-        this.logger.info("Conflicts detected - not closing new registration modal");
-      }
+      }, response => {
+        this.toastService.show(response, {classname: 'bg-danger text-light'});
+      });
 
-    }, response => {
-      this.toastService.show(response, {classname: 'bg-danger text-light'});
+  }
+
+  private addRegistrationsAndCloseDialog(registrationsToAdd: Registration[]) {
+    registrationsToAdd.forEach((registration: Registration) => {
+      this.addRegistration(registration, registration == registrationsToAdd[registrationsToAdd.length - 1])
     });
   }
 
-  // Date range / time selection
+// Date range / time selection
 
   hoveredDate: NgbDate | null = null;
   timeFrom = {hour: 12, minute: 0};
