@@ -116,6 +116,7 @@
 
   <br/><br/><br/>
 
+
   <h3>
     Alle Reservierungen
     <button class="btn btn-primary float-right" (click)="openNewRegistrationDialog()">
@@ -128,11 +129,11 @@
     <table class="table table-bordered">
       <thead>
       <tr>
-        <th>Beginn</th>
-        <th>Ende</th>
-        <th>Titel</th>
-        <th>FahrerIn</th>
-        <th>Löschen</th>
+        <th style="width: 15%">Beginn</th>
+        <th style="width: 15%">Ende</th>
+        <th style="width: 15%">FahrerIn</th>
+        <th style="width: 60%">Titel</th>
+        <th style="width: 15%">Löschen</th>
       </tr>
       </thead>
 
@@ -172,7 +173,7 @@
           <input
             type="text"
             class="form-control"
-            [(ngModel)]="event.meta.event.title"
+            [(ngModel)]="event.meta.event.username"
             (keyup)="refresh.next()"
           />
         </td>
@@ -180,7 +181,7 @@
           <input
             type="text"
             class="form-control"
-            [(ngModel)]="event.meta.event.username"
+            [(ngModel)]="event.meta.event.title"
             (keyup)="refresh.next()"
           />
         </td>

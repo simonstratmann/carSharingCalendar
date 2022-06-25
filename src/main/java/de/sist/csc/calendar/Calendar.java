@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +20,12 @@ public class Calendar {
 
     public synchronized List<Registration> getRegistrations() {
         return repo.findAll();
+    }
+
+    public synchronized List<Registration> getRegistrationsStartEndBetween(Integer daysOffsetStartAfter, Integer daysOffsetEndBefore) {
+        final Instant startAfter = Instant.now().minus(daysOffsetStartAfter == null ? 100 : daysOffsetStartAfter, ChronoUnit.DAYS);
+        final Instant endBefore = Instant.now().plus(daysOffsetEndBefore == null ? 100 : daysOffsetEndBefore, ChronoUnit.DAYS);
+        return repo.findAllByStartAfterAndEndBefore(startAfter, endBefore);
     }
 
     public synchronized void addRegistration(Registration registration) {

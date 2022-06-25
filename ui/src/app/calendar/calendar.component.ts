@@ -154,7 +154,8 @@ export class CscComponent {
   fetchEvents(): void {
     this.logger.info("Loading registrations")
     this.http
-      .get('/api/registrations')
+      // Lade alle Registrierungen, die älter als 30 Tage sind
+      .get('/api/registrations/?daysOffsetStartAfter=' + 30)
       .subscribe((events: Registration[]) => {
         this.logger.info("Received ", events.length, " registration entries")
         this.events = [];
