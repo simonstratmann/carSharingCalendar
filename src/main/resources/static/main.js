@@ -605,6 +605,7 @@ class CscComponent {
         ];
         this.refresh = new rxjs__WEBPACK_IMPORTED_MODULE_5__.Subject();
         this.activeDayIsOpen = false;
+        this.shiftedShown = false;
         this.conflicts = [];
         // Date range / time selection
         this.hoveredDate = null;
@@ -676,6 +677,7 @@ class CscComponent {
     openNewRegistrationDialog() {
         this.registration = {};
         this.shifted = false;
+        this.shiftedShown = false;
         this.fromDate = _ng_bootstrap_ng_bootstrap__WEBPACK_IMPORTED_MODULE_9__.NgbDate.from({ year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay() });
         this.toDate = _ng_bootstrap_ng_bootstrap__WEBPACK_IMPORTED_MODULE_9__.NgbDate.from({ year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay() });
         this.conflicts = [];
@@ -728,11 +730,19 @@ class CscComponent {
             if (response.conflicts.length === 0) {
                 this.addRegistration(this.registration);
             }
+            else if (response.shifted) {
+                if (!this.shiftedShown) {
+                    this.registration = response.registration;
+                    this.logger.info("Registration shifted- not closing new registration modal: ", response.registration);
+                    this.shiftedShown = true;
+                }
+                else {
+                    this.logger.info("Shifted already shown - user has accepted shifted registration: ", response.registration);
+                    this.addRegistration(response.registration);
+                }
+            }
             else {
                 this.logger.info("Conflicts detected - not closing new registration modal");
-                if (response.shifted) {
-                    this.registration = response.registration;
-                }
             }
         }, response => {
             this.toastService.show(response, { classname: 'bg-danger text-light' });
@@ -1084,7 +1094,6 @@ class AngularDateHttpInterceptor {
             const casted = body;
             for (const key of Object.keys(casted)) {
                 const value = casted[key];
-                console.log(value);
                 if (this.isIso8601(value)) {
                     casted[key] = new Date(value);
                 }

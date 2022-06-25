@@ -207,12 +207,14 @@ export class CscComponent {
 
   private ngbModalRef: NgbModalRef;
   shifted: boolean;
+  private shiftedShown: boolean = false;
   conflicts: Registration[] = [];
 
 
   openNewRegistrationDialog(): void {
     this.registration = {};
     this.shifted = false;
+    this.shiftedShown = false;
     this.fromDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
     this.toDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
     this.conflicts = [];
@@ -268,12 +270,19 @@ export class CscComponent {
       this.conflicts = response.conflicts;
       if (response.conflicts.length === 0) {
         this.addRegistration(this.registration);
+      } else if (response.shifted) {
+        if (!this.shiftedShown) {
+          this.registration = response.registration;
+          this.logger.info("Registration shifted- not closing new registration modal: ", response.registration);
+          this.shiftedShown = true;
+        } else {
+          this.logger.info("Shifted already shown - user has accepted shifted registration: ", response.registration);
+          this.addRegistration(response.registration);
+        }
       } else {
         this.logger.info("Conflicts detected - not closing new registration modal");
-        if (response.shifted) {
-          this.registration = response.registration;
-        }
       }
+
     }, response => {
       this.toastService.show(response, {classname: 'bg-danger text-light'});
     });

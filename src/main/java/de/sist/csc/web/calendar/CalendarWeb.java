@@ -62,20 +62,24 @@ public class CalendarWeb {
 
     //Wir führen das mehrfach aus, um alle Konflikte zu findend und zu behandeln
     private Registration tryShift(Registration registration) {
-        Registration shifted = registration;
+        Registration shifted = new Registration(registration.getId(), registration.getStart(), registration.getEnd(), registration.getUsername(), registration.getTitle(), registration.getText());
         List<Registration> conflicts = findConflicts(shifted);
-        if (!conflicts.isEmpty()) {
-            shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        if (conflicts.isEmpty()) {
+            return shifted;
         }
+
+        shifted = CalendarCalculations.tryShiftRegistration(shifted, conflicts);
         conflicts = findConflicts(shifted);
-        if (!conflicts.isEmpty()) {
-            shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        if (conflicts.isEmpty()) {
+            return shifted;
         }
+
+        shifted = CalendarCalculations.tryShiftRegistration(shifted, conflicts);
         conflicts = findConflicts(shifted);
-        if (!conflicts.isEmpty()) {
-            shifted = CalendarCalculations.tryShiftRegistration(registration, conflicts);
+        if (conflicts.isEmpty()) {
+            return shifted;
         }
-        return shifted;
+        return registration;
     }
 
     private List<Registration> findConflicts(Registration registration) {
