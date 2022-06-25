@@ -3,7 +3,7 @@ package de.sist.csc.calendar;
 
 import com.google.common.collect.Iterables;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -72,11 +72,11 @@ public class CalendarCalculations {
         return registration;
     }
 
-    private static boolean isBefore(LocalDateTime isBefore, LocalDateTime localDateTime) {
-        return isBefore.isBefore(localDateTime) || isBefore.isEqual(localDateTime);
+    private static boolean isBefore(Instant isBefore, Instant localDateTime) {
+        return isBefore.isBefore(localDateTime) || isBefore.equals(localDateTime);
     }
 
-    private static boolean isAfter(LocalDateTime isAfter, LocalDateTime localDateTime) {
-        return isAfter.isAfter(localDateTime) || isAfter.isEqual(localDateTime);
+    private static boolean isAfter(Instant isAfter, Instant localDateTime) {
+        return isAfter.isAfter(localDateTime) || isAfter.equals(localDateTime);
     }
 }

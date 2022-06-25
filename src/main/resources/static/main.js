@@ -720,6 +720,7 @@ class CscComponent {
     }
     submit() {
         this.onTimeChange();
+        this.logger.info("Checking for conflicts with entry ", this.registration);
         this.http.post('/api/registrations/conflictCheck', this.registration).subscribe((response) => {
             this.logger.info(response);
             this.shifted = response.shifted;
@@ -1083,6 +1084,7 @@ class AngularDateHttpInterceptor {
             const casted = body;
             for (const key of Object.keys(casted)) {
                 const value = casted[key];
+                console.log(value);
                 if (this.isIso8601(value)) {
                     casted[key] = new Date(value);
                 }

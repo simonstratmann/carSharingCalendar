@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.io.File;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.Arrays;
@@ -90,8 +91,8 @@ class CalendarCalculationsTest {
         return new Registration(1, getLocalDateTime(fromDay, fromHour), getLocalDateTime(toDay, toHour), user, title, "text");
     }
 
-    private static LocalDateTime getLocalDateTime(int dayOfMonth, int hour) {
-        return LocalDateTime.of(2022, Month.JUNE, dayOfMonth, hour, 0);
+    private static Instant getLocalDateTime(int dayOfMonth, int hour) {
+        return Instant.from(LocalDateTime.of(2022, Month.JUNE, dayOfMonth, hour, 0));
     }
 
     @Test

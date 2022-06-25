@@ -246,7 +246,6 @@ export class CscComponent {
   }
 
   addRegistration(registration: Registration) {
-
     this.logger.info("Adding new registration: ", registration);
     this.cookieService.set("username", registration.username);
     this.http.post('/api/registrations', registration).subscribe(response => {
@@ -262,6 +261,7 @@ export class CscComponent {
 
   submit() {
     this.onTimeChange();
+    this.logger.info("Checking for conflicts with entry ", this.registration);
     this.http.post('/api/registrations/conflictCheck', this.registration).subscribe((response: ConflictCheckResponse) => {
       this.logger.info(response);
       this.shifted = response.shifted;

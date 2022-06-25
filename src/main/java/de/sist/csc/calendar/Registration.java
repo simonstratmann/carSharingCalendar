@@ -9,7 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 
 @Data
@@ -21,9 +21,9 @@ public class Registration {
     @Id
     @GeneratedValue
     private long id;
-    private LocalDateTime start;
+    private Instant start;
     @Column(name = "endtimestamp")
-    private LocalDateTime end;
+    private Instant end;
     private String username;
     private String title;
     private String text;
