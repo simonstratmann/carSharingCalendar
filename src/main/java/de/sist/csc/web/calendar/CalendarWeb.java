@@ -5,6 +5,7 @@ import de.sist.csc.calendar.Calendar;
 import de.sist.csc.calendar.CalendarCalculations;
 import de.sist.csc.calendar.Registration;
 import de.sist.csc.web.base.Response;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,8 +37,8 @@ public class CalendarWeb {
 
 
     @PostMapping(value = "/api/registrations", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Response addRegistration(@RequestBody Registration registration) throws Exception {
-        calendar.addRegistration(registration);
+    public Response addRegistration(@RequestBody Registration registration, @RequestParam Integer repetitions) throws Exception {
+        calendar.addRegistration(registration, repetitions == null ? 1 : repetitions);
         return new Response(true, null);
     }
 
@@ -47,23 +49,50 @@ public class CalendarWeb {
     }
 
     @PostMapping(value = "/api/registrations/conflictCheck", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ConflictCheckResponse checkForConflicting(@RequestBody Registration registration) throws Exception {
-        final List<Registration> conflicts = calendar.getRegistrations().stream().filter(x -> CalendarCalculations.isOverlapping(x, registration)).collect(Collectors.toList());
-        log.debug("Found {} conflicts for {}: {}", conflicts.size(), registration, conflicts);
-        if (conflicts.isEmpty()) {
-            return ConflictCheckResponse.noConflicts(registration);
+    public ConflictCheckResponse checkForConflicting(@RequestBody Registration registration, @RequestParam Integer repetitions) throws Exception {
+        if (repetitions == null || repetitions == 1) {
+            List<Registration> conflicts = findConflicts(registration);
+            log.debug("Found {} conflicts for {}: {}", conflicts.size(), registration, conflicts);
+            if (conflicts.isEmpty()) {
+                return ConflictCheckResponse.noConflicts(registration);
+            }
+            log.debug("Trying to shift registration to avoid conflicts");
+            Registration shifted = tryShift(registration);
+            if (!shifted.equals(registration)) {
+                return ConflictCheckResponse.shifted(shifted, conflicts);
+            }
+            return ConflictCheckResponse.conflict(registration, conflicts);
         }
-        log.debug("Trying to shift registration to avoid conflicts");
-        Registration shifted = tryShift(registration);
-        if (!shifted.equals(registration)) {
-            return ConflictCheckResponse.shifted(shifted, conflicts);
+
+        final List<Registration> allBlockingConflicts = new ArrayList<>();
+        final List<Registration> allShiftCausingConflicts = new ArrayList<>();
+        final List<Registration> unchangedRegistrations = new ArrayList<>();
+        final List<Registration> shiftedRegistrations = new ArrayList<>();
+        final List<Registration> blockedRegistrations = new ArrayList<>();
+        for (int i = 0; i < repetitions; i++) {
+            Registration copy = registration.copy();
+            copy.shiftWeeks(i);
+            final List<Registration> conflicts = findConflicts(copy);
+            if (conflicts.isEmpty()) {
+                unchangedRegistrations.add(copy);
+                continue;
+            }
+            final Registration shifted = tryShift(copy);
+            if (!shifted.equals(copy)) {
+                shiftedRegistrations.add(shifted);
+                allShiftCausingConflicts.addAll(conflicts);
+            } else {
+                blockedRegistrations.add(copy);
+                allBlockingConflicts.addAll(conflicts);
+            }
         }
-        return ConflictCheckResponse.conflict(registration, conflicts);
+        return new ConflictCheckResponse(allBlockingConflicts, allShiftCausingConflicts, unchangedRegistrations, shiftedRegistrations, blockedRegistrations);
+
     }
 
     //Wir führen das mehrfach aus, um alle Konflikte zu findend und zu behandeln
     private Registration tryShift(Registration registration) {
-        Registration shifted = new Registration(registration.getId(), registration.getStart(), registration.getEnd(), registration.getUsername(), registration.getTitle(), registration.getText());
+        Registration shifted = registration.copy();
         List<Registration> conflicts = findConflicts(shifted);
         if (conflicts.isEmpty()) {
             return shifted;
@@ -85,6 +114,13 @@ public class CalendarWeb {
 
     private List<Registration> findConflicts(Registration registration) {
         return calendar.getRegistrations().stream().filter(x -> CalendarCalculations.isOverlapping(x, registration)).collect(Collectors.toList());
+    }
+
+    @Data
+    private static class ShiftResponse {
+        private final List<Registration> remainingConflicts;
+        private final boolean shifted;
+
     }
 
 

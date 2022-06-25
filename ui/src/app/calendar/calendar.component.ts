@@ -115,6 +115,7 @@ export class CscComponent {
   private shiftedShown: boolean = false;
   conflicts: Registration[] = [];
   registration: Registration;
+  repetitions: number = 1;
 
   actions: CalendarEventAction[] = [
     {
@@ -215,6 +216,7 @@ export class CscComponent {
   openNewRegistrationDialog(): void {
     this.registration = {};
     this.shifted = false;
+    this.repetitions = 1;
     this.shiftedShown = false;
     this.fromDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
     this.toDate = NgbDate.from({year: new Date().getFullYear(), month: new Date().getMonth(), day: new Date().getDay()});
@@ -298,6 +300,7 @@ export class CscComponent {
 
   fromDate: NgbDate;
   toDate: NgbDate | null = null;
+
 
   private ngDateToReservation(date: NgbDate, otherDate: Date = null) {
     return new Date(date.year, date.month - 1, date.day, otherDate == null ? 0 : otherDate.getHours(), 0);

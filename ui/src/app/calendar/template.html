@@ -272,20 +272,58 @@
         </div>
         <div class="form-group">
           <label>Zeitraum</label><br>
-          <ngb-datepicker #dp (dateSelect)="onDateSelection($event)" [displayMonths]="1" [dayTemplate]="dateRangeTemplate" outsideDays="hidden">
-          </ngb-datepicker>
-          <br>
           <div class="row">
-            <div class="col-md-2">
-              <ngb-timepicker [(ngModel)]="timeFrom" [minuteStep]="15" name="time" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+            <div class="col-sm-4">
+              <ngb-datepicker #dp (dateSelect)="onDateSelection($event)" [displayMonths]="1" [dayTemplate]="dateRangeTemplate" outsideDays="hidden">
+              </ngb-datepicker>
             </div>
-            <div class="col-md-1" style="width: 5%; margin-top: auto;margin-bottom: auto">
-              bis
-            </div>
-            <div class="col-md-2">
-              <ngb-timepicker [(ngModel)]="timeTo" [minuteStep]="15" name="time2" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+            <div class="col">
+              <div class="row">
+                <div class="col-md-auto">
+                  <ngb-timepicker [(ngModel)]="timeFrom" [minuteStep]="15" name="time" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+                </div>
+                <div class="col-1" style="width: 5%; margin-top: 45px">
+                  bis
+                </div>
+                <div class="col-md-auto">
+                  <ngb-timepicker [(ngModel)]="timeTo" [minuteStep]="15" name="time2" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+                </div>
+              </div>
+              <div class="row" style="margin-top: 20px">
+                <div class="col">
+                  Wiederhole für die nächsten Wochen: <input type="number" name="repetitions" [ngModel]="repetitions" style="width: 40px"/>
+                </div>
+
+              </div>
             </div>
           </div>
+          <!--<div class="row">
+            <div class="col-md-4">
+          <ngb-datepicker #dp (dateSelect)="onDateSelection($event)" [displayMonths]="1" [dayTemplate]="dateRangeTemplate" outsideDays="hidden">
+          </ngb-datepicker>
+
+            </div>
+            <div class="col-md-16">
+              <div class="row">
+              <div class="col-md-2">
+                <ngb-timepicker [(ngModel)]="timeFrom" [minuteStep]="15" name="time" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+              </div>
+              <div class="col-md-1" style="width: 5%; margin-top: 45px">
+                bis
+              </div>
+              <div class="col-md-2">
+                <ngb-timepicker [(ngModel)]="timeTo" [minuteStep]="15" name="time2" (ngModelChange)="onTimeChange()"></ngb-timepicker>
+              </div>
+              </div>
+              <div class="row">
+                <div class="col-md-5">
+                  Wiederholungen
+                </div>
+
+              </div>
+
+            </div>
+          </div>-->
           {{registration.start | date: "d.M.y H:mm"}} - {{registration.end | date: "d.M.y H:mm"}}
         </div>
 

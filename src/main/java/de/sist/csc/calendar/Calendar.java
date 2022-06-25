@@ -28,9 +28,15 @@ public class Calendar {
         return repo.findAllByStartAfterAndEndBefore(startAfter, endBefore);
     }
 
-    public synchronized void addRegistration(Registration registration) {
-        log.info("Adding registration {}", registration);
-        repo.save(registration);
+    public synchronized void addRegistration(Registration registration, int repetitions) {
+        log.info("Adding registration {} with {} repetitions", repetitions, registration);
+        for (int i = 0; i < repetitions; i++) {
+            registration.shiftWeeks(i);
+            if (i > 0) {
+                log.info("Adding repeated reservation with start {} and end {}", registration.getStart(), registration.getEnd());
+            }
+            repo.save(registration);
+        }
     }
 
     public synchronized boolean deleteRegistration(long id) {
