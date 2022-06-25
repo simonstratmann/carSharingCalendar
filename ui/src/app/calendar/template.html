@@ -186,7 +186,7 @@
           />
         </td>
         <td>
-          <button class="btn btn-danger" (click)="deleteRegistration(event.meta.event)">
+          <button class="btn btn-danger" (click)="deleteRegistration(event.meta.event.id)">
             Löschen
           </button>
         </td>
@@ -207,7 +207,10 @@
     </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary" (click)="close()">
+    <button type="button" class="btn btn-danger" (click)="deleteRegistration(eventInfoModalData?.event.meta.event.id)">
+      Löschen
+    </button>
+    <button type="button" class="btn btn-outline-primary" (click)="close()">
       OK
     </button>
   </div>

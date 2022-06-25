@@ -109,6 +109,11 @@ export class CscComponent {
     event: CalendarEvent;
   };
 
+  private newReservationModal: NgbModalRef;
+  private reservationDetailModal: NgbModalRef;
+  shifted: boolean;
+  private shiftedShown: boolean = false;
+  conflicts: Registration[] = [];
   registration: Registration;
 
   actions: CalendarEventAction[] = [
@@ -130,7 +135,7 @@ export class CscComponent {
 
   handleEvent(action: string, event: CalendarEvent): void {
     this.eventInfoModalData = {event, action};
-    this.modalService.open(this.eventModalContent, {size: 'lg'});
+    this.reservationDetailModal = this.modalService.open(this.eventModalContent, {size: 'lg'});
   }
 
   refresh = new Subject<void>();
@@ -161,7 +166,7 @@ export class CscComponent {
         this.events = [];
         events.forEach(event => {
           this.events.push({
-            title: event.username + ": " + event.title,
+            title: event.username + (event.title ? ": " + event.title : ""),
             start: event.start,
             actions: this.actions,
             end: event.end,
@@ -206,11 +211,6 @@ export class CscComponent {
     this.activeDayIsOpen = false;
   }
 
-  private ngbModalRef: NgbModalRef;
-  shifted: boolean;
-  private shiftedShown: boolean = false;
-  conflicts: Registration[] = [];
-
 
   openNewRegistrationDialog(): void {
     this.registration = {};
@@ -232,16 +232,17 @@ export class CscComponent {
     this.timeFrom.minute = this.registration.start.getMinutes();
     this.timeTo.hour = this.registration.end.getHours();
     this.timeTo.minute = this.registration.end.getMinutes();
-    this.ngbModalRef = this.modalService.open(this.modalContent, {size: 'lg'});
+    this.newReservationModal = this.modalService.open(this.modalContent, {size: 'lg'});
   }
 
-  deleteRegistration(event: Registration) {
+  deleteRegistration(id: number) {
     if (!confirm("Wirklich die Reservierung löschen?")) {
       return;
     }
-    this.http.delete('/api/registrations/' + event.id).subscribe(response => {
-      this.logger.info(response);
+    this.http.delete('/api/registrations/' + id).subscribe(response => {
+      this.logger.info("Reservation deleted: ", response);
       this.fetchEvents();
+      this.reservationDetailModal.close();
       this.toastService.show('Reservierung gelöscht', {classname: 'bg-success text-light'});
     }, response => {
       this.toastService.show(response, {classname: 'bg-danger text-light'});
@@ -253,7 +254,7 @@ export class CscComponent {
     this.cookieService.set("username", registration.username);
     this.http.post('/api/registrations', registration).subscribe(response => {
       this.logger.info(response);
-      this.ngbModalRef.close();
+      this.newReservationModal.close();
       this.toastService.show('Reservierung hinzugefügt', {classname: 'bg-success text-light'});
       this.fetchEvents();
 
