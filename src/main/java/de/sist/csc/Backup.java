@@ -1,4 +1,3 @@
-// (C) 2022 PPI AG
 package de.sist.csc;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,7 @@ public class Backup {
     @Autowired
     private EntityManager entityManager;
 
-    @Scheduled(fixedRate = 24, initialDelay = 0, timeUnit = TimeUnit.HOURS)
+    @Scheduled(fixedRate = 24, initialDelay = 24, timeUnit = TimeUnit.HOURS)
     @Transactional
     public void backup() {
         final File file = new File("backup/" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE) + ".sql");

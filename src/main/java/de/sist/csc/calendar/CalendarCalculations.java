@@ -1,4 +1,3 @@
-// (C) 2022 PPI AG
 package de.sist.csc.calendar;
 
 import com.google.common.collect.Iterables;

@@ -1,4 +1,3 @@
-// (C) 2022 PPI AG
 package de.sist.csc.web.base;
 
 import org.springframework.context.annotation.Bean;
